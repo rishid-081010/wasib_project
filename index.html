@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Estate AI Voice Agent Dashboard</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>WNN Realty AI</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="index.html" class="nav-item active">Dashboard</a>
+                <a href="whatsapp.html" class="nav-item">WhatsApp Sandbox</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>Campaign Overview</h1>
+                </div>
+                <div class="header-controls">
+                    <label for="campaign-select">Select Campaign:</label>
+                    <select id="campaign-select" class="campaign-dropdown">
+                        <option value="property-pitch">Property Pitch (DAMAC Islands)</option>
+                        <option value="open-house">Open House Invitation</option>
+                    </select>
+                </div>
+            </header>
+
+            <!-- Property Pitch View -->
+            <section id="property-pitch-view" class="dashboard-view active-view">
+                <!-- Custom KPI Layout -->
+                <div class="custom-layout-top">
+                    <div class="glass-card kpi-card">
+                        <span class="kpi-label">Total Outbound Calls</span>
+                        <span class="kpi-value" id="pp-total-calls">0</span>
+                    </div>
+                    <div class="glass-card kpi-card">
+                        <span class="kpi-label">Answer Rate</span>
+                        <span class="kpi-value text-blue" id="pp-answer-rate">0% (0)</span>
+                    </div>
+                </div>
+
+                <div class="custom-layout-bottom">
+                    <!-- Interested Card -->
+                    <div class="glass-card nested-kpi-container">
+                        <div class="nested-header">
+                            <span class="kpi-label">Interested in Property</span>
+                            <span class="kpi-value text-green" id="pp-interested">0% (0)</span>
+                        </div>
+                        <div class="nested-cards">
+                            <div class="inner-glass-card">
+                                <span class="kpi-label">No. of Meetings Booked</span>
+                                <span class="kpi-value text-purple" id="pp-meetings-booked">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Not Interested Card -->
+                    <div class="glass-card nested-kpi-container">
+                        <div class="nested-header">
+                            <span class="kpi-label">Not Interested in Property</span>
+                            <span class="kpi-value text-red" id="pp-not-interested">0% (0)</span>
+                        </div>
+                        <div class="nested-cards">
+                            <div class="inner-glass-card">
+                                <span class="kpi-label">Looking for other property</span>
+                                <span class="kpi-value text-yellow" id="pp-looking-other">0% (0)</span>
+                            </div>
+                            <div class="inner-glass-card">
+                                <span class="kpi-label">Looking to sell</span>
+                                <span class="kpi-value text-blue" id="pp-looking-sell">0% (0)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <!-- Row 2: Funnel Chart -->
+                    <div class="glass-card chart-container">
+                        <h3>Outcome Funnel</h3>
+                        <div class="canvas-wrapper">
+                            <canvas id="pp-funnel-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 3: Donut Chart -->
+                    <div class="glass-card chart-container">
+                        <h3>Not Interested Breakdown</h3>
+                        <div class="canvas-wrapper">
+                            <canvas id="pp-donut-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Raw Call Log Table -->
+                <div class="glass-card table-container">
+                    <div class="table-header">
+                        <h3>Recent Calls</h3>
+                        <div class="table-filters">
+                            <input type="date" id="pp-date-filter" class="filter-input">
+                            <select id="pp-agent-filter" class="filter-input">
+                                <option value="all">All Agents</option>
+                                <option value="AI Agent">AI Agent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Phone Number</th>
+                                    <th>Duration</th>
+                                    <th>Outcome</th>
+                                    <th>Notes / Tags</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pp-call-log-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Open House View -->
+            <section id="open-house-view" class="dashboard-view">
+                <!-- Row 1: KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="glass-card kpi-card">
+                        <span class="kpi-label">Total Calls Made</span>
+                        <span class="kpi-value" id="oh-total-calls">0</span>
+                    </div>
+                    <div class="glass-card kpi-card">
+                        <span class="kpi-label">Calls Picked Up</span>
+                        <span class="kpi-value text-green" id="oh-picked-up">0</span>
+                    </div>
+                    <div class="glass-card kpi-card">
+                        <span class="kpi-label">Calls Not Picked Up</span>
+                        <span class="kpi-value text-red" id="oh-not-picked-up">0</span>
+                    </div>
+                </div>
+
+                <div class="charts-row">
+                    <!-- Main outcomes -->
+                    <div class="glass-card chart-container">
+                        <h3>Call Outcomes</h3>
+                        <div class="stats-list">
+                            <div class="stat-item">
+                                <span class="stat-name">Said Yes (Will Come)</span>
+                                <span class="stat-number text-green" id="oh-yes">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name">Said No (Not Coming)</span>
+                                <span class="stat-number text-red" id="oh-no">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name">Invite Sent on WhatsApp</span>
+                                <span class="stat-number text-blue" id="oh-whatsapp">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown & Other -->
+                    <div class="glass-card chart-container">
+                        <h3>Detailed Breakdown</h3>
+                        <div class="stats-list">
+                            <div class="stat-item">
+                                <span class="stat-name">Wants Updates (Next Time)</span>
+                                <span class="stat-number" id="oh-wants-updates">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name">Don't Contact Again</span>
+                                <span class="stat-number text-red" id="oh-do-not-contact">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name">Callback Requested</span>
+                                <span class="stat-number text-yellow" id="oh-callback">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-name">Showed Up on the Day</span>
+                                <span class="stat-number text-purple" id="oh-showed-up">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>

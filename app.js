@@ -138,7 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
         notPickedUp: 540,
         saidYes: 85,
         saidNo: 225,
-        inviteSentWhatsApp: 110, // Some nos still wanted info
+        detailsSentWhatsApp: {
+            total: 110,
+            interested: 30,
+            notInterested: 80
+        },
         wantsUpdates: 60,
         doNotContact: 15,
         callbackRequested: 40,
@@ -150,7 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('oh-not-picked-up').innerText = ohStats.notPickedUp;
     document.getElementById('oh-yes').innerText = ohStats.saidYes;
     document.getElementById('oh-no').innerText = ohStats.saidNo;
-    document.getElementById('oh-whatsapp').innerText = ohStats.inviteSentWhatsApp;
+    
+    document.getElementById('oh-details-sent').innerText = ohStats.detailsSentWhatsApp.total;
+    document.getElementById('oh-details-interested').innerText = ohStats.detailsSentWhatsApp.interested;
+    document.getElementById('oh-details-not-interested').innerText = ohStats.detailsSentWhatsApp.notInterested;
+    
     document.getElementById('oh-wants-updates').innerText = ohStats.wantsUpdates;
     document.getElementById('oh-do-not-contact').innerText = ohStats.doNotContact;
     document.getElementById('oh-callback').innerText = ohStats.callbackRequested;

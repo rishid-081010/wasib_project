@@ -65,7 +65,19 @@ function handleRetellWebhook(req, res) {
     const callId = body.call_id || `call_${Date.now()}`;
 
     if (functionName === 'backend' || args.Answered !== undefined) {
-        // This is the main tool call from the voice agent
+        // Ignore ghost calls where agent fires backend before the call even starts (all fields null)
+        const allFieldsNull = !args.Answered && !args.Main_property && !args.Meeting_booked &&
+            !args.Whatsapp_number && !args.Meeting_date && !args.Meeting_time &&
+            !args.Other_properties && !args.Budget && !args.To_sell &&
+            !args.Sell_type && !args.Sell_name && !args.Sell_BHK &&
+            !args.Sell_location && !args.Sell_price;
+
+        if (allFieldsNull) {
+            console.log(`[Webhook] Ignored ghost call (all fields null) — call_id: ${callId}`);
+            return res.status(200).json({ status: 'ignored', message: 'Ghost call ignored — all fields null' });
+        }
+
+        // This is a valid tool call from the voice agent
         const callRecord = {
             id: store.calls.length + 1,
             call_id: callId,

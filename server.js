@@ -64,7 +64,36 @@ function handleRetellWebhook(req, res) {
     const args = body.args || {};
     const callId = body.call_id || `call_${Date.now()}`;
 
-    if (functionName === 'backend' || args.Answered !== undefined) {
+    if (functionName === 'not_answered') {
+        const callRecord = {
+            id: store.calls.length + 1,
+            call_id: callId,
+            timestamp,
+            answered: 'no',
+            main_property: null
+        };
+        store.calls.unshift(callRecord);
+        saveData(store);
+        return res.status(200).json({ status: 'success', message: 'not_answered tool logged' });
+    }
+
+    if (functionName === 'callback') {
+        const callRecord = {
+            id: store.calls.length + 1,
+            call_id: callId,
+            timestamp,
+            answered: 'yes',
+            callback_requested: 'yes',
+            main_property: null,
+            callback_date: args.Callback_date || null,
+            callback_time: args.Callback_time || null
+        };
+        store.calls.unshift(callRecord);
+        saveData(store);
+        return res.status(200).json({ status: 'success', message: 'callback tool logged' });
+    }
+
+    if (functionName === 'backend' || args.Answered !== undefined || args.Main_property !== undefined) {
         // Ignore ghost calls where agent fires backend before the call even starts (all fields null)
         const allFieldsNull = !args.Answered && !args.Main_property && !args.Meeting_booked &&
             !args.Whatsapp_number && !args.Meeting_date && !args.Meeting_time &&
@@ -77,14 +106,20 @@ function handleRetellWebhook(req, res) {
             return res.status(200).json({ status: 'ignored', message: 'Ghost call ignored — all fields null' });
         }
 
+        // Normalize Main_property to 'yes'/'no' for dashboard compatibility
+        let normalizedMainProperty = args.Main_property || null;
+        if (normalizedMainProperty === 'interested') normalizedMainProperty = 'yes';
+        else if (normalizedMainProperty === 'not interested') normalizedMainProperty = 'no';
+
         // This is a valid tool call from the voice agent
         const callRecord = {
             id: store.calls.length + 1,
             call_id: callId,
             timestamp,
-            // Core fields from the VA's 14-parameter backend call
-            answered: args.Answered || null,
-            main_property: args.Main_property || null,
+            // Core fields from the VA's backend call
+            answered: 'yes', // Since backend is called, they must have answered
+            callback_requested: 'no',
+            main_property: normalizedMainProperty,
             meeting_booked: args.Meeting_booked || null,
             whatsapp_number: args.Whatsapp_number || null,
             meeting_date: args.Meeting_date || null,

@@ -18,150 +18,194 @@ document.addEventListener('DOMContentLoaded', () => {
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
 
-    // Mock Data for Property Pitch
-    const ppStats = {
-        totalCalls: 1250,
-        answered: 450,
-        interested: 180,
-        meetingsBooked: 45,
-        whatsappConfirmed: 80, // of interested people
-        notInterested: {
-            otherProject: 120,
-            selling: 50,
-            neither: 100
+    // Chart instances (so we can destroy and re-create on refresh)
+    let funnelChartInstance = null;
+    let donutChartInstance = null;
+
+    // ─── Fetch & Render Property Pitch Stats from Backend ───────────────────
+    async function loadPropertyPitchStats() {
+        try {
+            const res = await fetch('/api/stats/property-pitch');
+            const stats = await res.json();
+
+            // KPI Cards
+            document.getElementById('pp-total-calls').innerText = stats.totalCalls;
+            document.getElementById('pp-answer-rate').innerText = `${stats.answerRate}% (${stats.answered})`;
+            document.getElementById('pp-interested').innerText = `${stats.interestedRate}% (${stats.interested})`;
+            document.getElementById('pp-meetings-booked').innerText = stats.meetingsBooked;
+            document.getElementById('pp-not-interested').innerText = `${stats.notInterestedRate}% (${stats.notInterested})`;
+            document.getElementById('pp-looking-other').innerText = `${stats.lookingOtherRate}% (${stats.lookingOther})`;
+            document.getElementById('pp-looking-sell').innerText = `${stats.lookingToSellRate}% (${stats.lookingToSell})`;
+
+            // Funnel Chart
+            if (funnelChartInstance) funnelChartInstance.destroy();
+            const funnelCtx = document.getElementById('pp-funnel-chart').getContext('2d');
+            funnelChartInstance = new Chart(funnelCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Answered', 'Interested', 'Meeting Booked', 'WA Confirmed'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [stats.funnel.answered, stats.funnel.interested, stats.funnel.meetingsBooked, stats.funnel.whatsappCaptured],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(168, 85, 247, 0.8)',
+                            'rgba(234, 179, 8, 0.8)'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
+            });
+
+            // Donut Chart
+            if (donutChartInstance) donutChartInstance.destroy();
+            const donutCtx = document.getElementById('pp-donut-chart').getContext('2d');
+            donutChartInstance = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Other Project', 'Looking to Sell', 'No Interest / Nurture'],
+                    datasets: [{
+                        data: [stats.lookingOther, stats.lookingToSell, stats.neither],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(148, 163, 184, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+        } catch (err) {
+            console.error('Error loading Property Pitch stats:', err);
         }
-    };
+    }
 
-    // Update PP KPIs
-    document.getElementById('pp-total-calls').innerText = ppStats.totalCalls;
-    const answerRate = ((ppStats.answered / ppStats.totalCalls) * 100).toFixed(1);
-    document.getElementById('pp-answer-rate').innerText = `${answerRate}% (${ppStats.answered})`;
-    
-    const intRate = ((ppStats.interested / ppStats.answered) * 100).toFixed(1);
-    document.getElementById('pp-interested').innerText = `${intRate}% (${ppStats.interested})`;
-    
-    document.getElementById('pp-meetings-booked').innerText = ppStats.meetingsBooked;
-    
-    const notIntTotal = ppStats.notInterested.otherProject + ppStats.notInterested.selling + ppStats.notInterested.neither;
-    const notIntRate = ((notIntTotal / ppStats.answered) * 100).toFixed(1);
-    document.getElementById('pp-not-interested').innerText = `${notIntRate}% (${notIntTotal})`;
-    
-    const otherRate = ((ppStats.notInterested.otherProject / notIntTotal) * 100).toFixed(1);
-    document.getElementById('pp-looking-other').innerText = `${otherRate}% (${ppStats.notInterested.otherProject})`;
-    
-    const sellRate = ((ppStats.notInterested.selling / notIntTotal) * 100).toFixed(1);
-    document.getElementById('pp-looking-sell').innerText = `${sellRate}% (${ppStats.notInterested.selling})`;
+    // ─── Fetch & Render Call Log Table from Backend ──────────────────────────
+    async function loadCallLog() {
+        try {
+            const res = await fetch('/api/calls');
+            const calls = await res.json();
+            const tbody = document.getElementById('pp-call-log-body');
+            tbody.innerHTML = '';
 
-    // Render Funnel Chart (Using Bar Chart as a funnel approximation)
-    const funnelCtx = document.getElementById('pp-funnel-chart').getContext('2d');
-    new Chart(funnelCtx, {
-        type: 'bar',
-        data: {
-            labels: ['Answered', 'Interested', 'Meeting Booked', 'WA Confirmed'],
-            datasets: [{
-                label: 'Count',
-                data: [ppStats.answered, ppStats.interested, ppStats.meetingsBooked, ppStats.whatsappConfirmed],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)', // blue
-                    'rgba(34, 197, 94, 0.8)',  // green
-                    'rgba(168, 85, 247, 0.8)', // purple
-                    'rgba(234, 179, 8, 0.8)'   // yellow
-                ],
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y', // horizontal bar chart
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                x: { beginAtZero: true }
+            if (calls.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No calls recorded yet. Waiting for Retell AI webhooks...</td></tr>';
+                return;
             }
+
+            calls.forEach(call => {
+                const tr = document.createElement('tr');
+
+                // Determine outcome and badge
+                let outcome = 'Not Answered';
+                let badge = 'danger';
+                let notes = '';
+
+                if (call.answered === 'yes') {
+                    if (call.main_property === 'interested') {
+                        if (call.meeting_booked === 'yes') {
+                            outcome = 'Meeting Booked';
+                            badge = 'success';
+                            notes = `Meeting: ${call.meeting_date || ''} ${call.meeting_time || ''}`;
+                            if (call.whatsapp_number) notes += ` | WA: ${call.whatsapp_number}`;
+                        } else {
+                            outcome = 'Interested';
+                            badge = 'blue';
+                        }
+                    } else if (call.main_property === 'not interested') {
+                        if (call.other_properties === 'yes') {
+                            outcome = 'Looking for Other';
+                            badge = 'warning';
+                            notes = call.budget ? `Budget: ${call.budget}` : '';
+                        } else if (call.to_sell === 'yes') {
+                            outcome = 'Wants to Sell';
+                            badge = 'warning';
+                            const sellParts = [call.sell_type, call.sell_name, call.sell_bhk ? `${call.sell_bhk} BHK` : null, call.sell_location].filter(Boolean);
+                            notes = sellParts.join(' | ');
+                            if (call.sell_price) notes += ` | Price: ${call.sell_price}`;
+                        } else {
+                            outcome = 'Not Interested';
+                            badge = 'danger';
+                            notes = 'No further interest';
+                        }
+                    } else {
+                        outcome = 'Answered';
+                        badge = 'blue';
+                    }
+                } else {
+                    outcome = 'Not Answered';
+                    badge = 'danger';
+                    notes = 'Call not picked up';
+                }
+
+                const dateStr = new Date(call.timestamp).toLocaleString('en-GB', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                tr.innerHTML = `
+                    <td>${dateStr}</td>
+                    <td>${call.call_id ? call.call_id.substring(0, 12) + '...' : 'N/A'}</td>
+                    <td>—</td>
+                    <td><span class="badge badge-${badge}">${outcome}</span></td>
+                    <td style="color: var(--text-muted); font-size: 0.85rem;">${notes || '—'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error('Error loading call log:', err);
         }
-    });
+    }
 
-    // Render Donut Chart
-    const donutCtx = document.getElementById('pp-donut-chart').getContext('2d');
-    new Chart(donutCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Other Project', 'Looking to Sell', 'No Interest / Nurture'],
-            datasets: [{
-                data: [ppStats.notInterested.otherProject, ppStats.notInterested.selling, ppStats.notInterested.neither],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)', // blue
-                    'rgba(239, 68, 68, 0.8)',  // red
-                    'rgba(148, 163, 184, 0.8)' // gray
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: { position: 'bottom' }
-            }
+    // ─── Open House Stats (from backend — starts at 0 for now) ──────────────
+    async function loadOpenHouseStats() {
+        try {
+            const res = await fetch('/api/stats/open-house');
+            const stats = await res.json();
+
+            document.getElementById('oh-total-calls').innerText = stats.totalCalls;
+            document.getElementById('oh-picked-up').innerText = stats.pickedUp;
+            document.getElementById('oh-not-picked-up').innerText = stats.notPickedUp;
+            document.getElementById('oh-yes').innerText = stats.saidYes;
+            document.getElementById('oh-no').innerText = stats.saidNo;
+
+            document.getElementById('oh-details-sent').innerText = stats.detailsSentWhatsApp.total;
+            document.getElementById('oh-details-interested').innerText = stats.detailsSentWhatsApp.interested;
+            document.getElementById('oh-details-not-interested').innerText = stats.detailsSentWhatsApp.notInterested;
+
+            document.getElementById('oh-wants-updates').innerText = stats.wantsUpdates;
+            document.getElementById('oh-do-not-contact').innerText = stats.doNotContact;
+            document.getElementById('oh-callback').innerText = stats.callbackRequested;
+            document.getElementById('oh-showed-up').innerText = stats.showedUp;
+        } catch (err) {
+            console.error('Error loading Open House stats:', err);
         }
-    });
+    }
 
-    // Populate Call Log Table
-    const mockLogs = [
-        { date: '2026-07-15 10:30', phone: '+971 50 123 4567', duration: '2m 15s', outcome: 'Meeting Booked', badge: 'success', notes: 'Budget AED 4M' },
-        { date: '2026-07-15 10:25', phone: '+971 55 987 6543', duration: '45s', outcome: 'Not Interested', badge: 'danger', notes: 'Looking for off-plan' },
-        { date: '2026-07-15 10:15', phone: '+971 52 333 4444', duration: '1m 10s', outcome: 'Callback Requested', badge: 'warning', notes: 'Call tomorrow 5PM' },
-        { date: '2026-07-15 10:05', phone: '+971 56 111 2222', duration: '3m 05s', outcome: 'Interested', badge: 'blue', notes: 'Sent brochure via WhatsApp' }
-    ];
+    // ─── Initial Load ───────────────────────────────────────────────────────
+    loadPropertyPitchStats();
+    loadCallLog();
+    loadOpenHouseStats();
 
-    const tbody = document.getElementById('pp-call-log-body');
-    mockLogs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${log.date}</td>
-            <td>${log.phone}</td>
-            <td>${log.duration}</td>
-            <td><span class="badge badge-${log.badge}">${log.outcome}</span></td>
-            <td style="color: var(--text-muted); font-size: 0.85rem;">${log.notes}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-
-
-    // Mock Data for Open House Invitation
-    const ohStats = {
-        totalCalls: 850,
-        pickedUp: 310,
-        notPickedUp: 540,
-        saidYes: 85,
-        saidNo: 225,
-        detailsSentWhatsApp: {
-            total: 110,
-            interested: 30,
-            notInterested: 80
-        },
-        wantsUpdates: 60,
-        doNotContact: 15,
-        callbackRequested: 40,
-        showedUp: 35 // updated post-event
-    };
-
-    document.getElementById('oh-total-calls').innerText = ohStats.totalCalls;
-    document.getElementById('oh-picked-up').innerText = ohStats.pickedUp;
-    document.getElementById('oh-not-picked-up').innerText = ohStats.notPickedUp;
-    document.getElementById('oh-yes').innerText = ohStats.saidYes;
-    document.getElementById('oh-no').innerText = ohStats.saidNo;
-    
-    document.getElementById('oh-details-sent').innerText = ohStats.detailsSentWhatsApp.total;
-    document.getElementById('oh-details-interested').innerText = ohStats.detailsSentWhatsApp.interested;
-    document.getElementById('oh-details-not-interested').innerText = ohStats.detailsSentWhatsApp.notInterested;
-    
-    document.getElementById('oh-wants-updates').innerText = ohStats.wantsUpdates;
-    document.getElementById('oh-do-not-contact').innerText = ohStats.doNotContact;
-    document.getElementById('oh-callback').innerText = ohStats.callbackRequested;
-    document.getElementById('oh-showed-up').innerText = ohStats.showedUp;
+    // ─── Auto-refresh every 15 seconds ──────────────────────────────────────
+    setInterval(() => {
+        loadPropertyPitchStats();
+        loadCallLog();
+    }, 15000);
 
 });

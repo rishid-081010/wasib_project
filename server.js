@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,151 +10,194 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static dashboard files
+// ─── Persistent Data Store (JSON file) ──────────────────────────────────────
+const DATA_FILE = path.join(__dirname, 'data.json');
+
+function loadData() {
+    try {
+        if (fs.existsSync(DATA_FILE)) {
+            return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+        }
+    } catch (e) {
+        console.error('[Data] Error loading data file:', e.message);
+    }
+    return { calls: [], webhookLogs: [] };
+}
+
+function saveData(data) {
+    try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    } catch (e) {
+        console.error('[Data] Error saving data file:', e.message);
+    }
+}
+
+// Initialize data store
+let store = loadData();
+
+// ─── Serve Static Dashboard Files ───────────────────────────────────────────
 app.use(express.static(__dirname));
 
-// In-memory data store for Webhooks and Webhook-driven Stats
-const webhookLogs = [];
-const callLogs = [
-    { id: 1, date: '2026-07-16 10:30', phone: '+971 50 123 4567', duration: '2m 15s', outcome: 'Meeting Booked', badge: 'success', notes: 'Budget AED 4M' },
-    { id: 2, date: '2026-07-16 10:25', phone: '+971 55 987 6543', duration: '45s', outcome: 'Not Interested', badge: 'danger', notes: 'Looking for off-plan' },
-    { id: 3, date: '2026-07-16 10:15', phone: '+971 52 333 4444', duration: '1m 10s', outcome: 'Callback Requested', badge: 'warning', notes: 'Call tomorrow 5PM' },
-    { id: 4, date: '2026-07-16 10:05', phone: '+971 56 111 2222', duration: '3m 05s', outcome: 'Interested', badge: 'blue', notes: 'Sent brochure via WhatsApp' }
-];
+// ─── Health Check ───────────────────────────────────────────────────────────
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', service: 'WNN Realty - Retell AI Webhook Server', totalCalls: store.calls.length, time: new Date().toISOString() });
+});
 
-let propertyPitchStats = {
-    totalCalls: 1250,
-    answered: 450,
-    interested: 180,
-    meetingsBooked: 45,
-    whatsappConfirmed: 80,
-    notInterested: {
-        total: 270,
-        otherProject: 120,
-        selling: 50,
-        neither: 100
-    }
-};
-
-let openHouseStats = {
-    totalCalls: 850,
-    pickedUp: 310,
-    notPickedUp: 540,
-    saidYes: 85,
-    saidNo: 225,
-    detailsSentWhatsApp: {
-        total: 110,
-        interested: 30,
-        notInterested: 80
-    },
-    wantsUpdates: 60,
-    doNotContact: 15,
-    callbackRequested: 40,
-    showedUp: 35
-};
-
-// Webhook Handler for Retell AI
+// ─── Retell AI Webhook Handler ──────────────────────────────────────────────
+// Retell sends: { "call_id": "...", "name": "backend", "args": { ...14 fields... } }
 function handleRetellWebhook(req, res) {
-    const payload = req.body || {};
+    const body = req.body || {};
     const timestamp = new Date().toISOString();
-    const eventType = payload.event || payload.type || 'unknown_event';
-    const callData = payload.call || payload;
 
-    console.log(`[Retell Webhook Received] Event: ${eventType} at ${timestamp}`);
+    console.log(`[Webhook] Received at ${timestamp}:`, JSON.stringify(body).substring(0, 500));
 
-    const logEntry = {
-        id: webhookLogs.length + 1,
+    // Log every raw webhook
+    store.webhookLogs.unshift({
+        id: store.webhookLogs.length + 1,
         timestamp,
-        event: eventType,
-        call_id: callData.call_id || 'N/A',
-        phone: callData.from_number || callData.user_number || callData.phone || 'Unknown',
-        payload
-    };
+        raw: body
+    });
+    if (store.webhookLogs.length > 200) store.webhookLogs.length = 200;
 
-    // Keep last 100 logs
-    webhookLogs.unshift(logEntry);
-    if (webhookLogs.length > 100) webhookLogs.pop();
+    // ── Handle the "backend" tool call from the VA ──
+    const functionName = body.name;
+    const args = body.args || {};
+    const callId = body.call_id || `call_${Date.now()}`;
 
-    // Dynamically update stats if it's a call event
-    if (eventType === 'call_analyzed' || eventType === 'call_ended' || callData.call_analysis) {
-        const analysis = callData.call_analysis || {};
-        const customArgs = analysis.custom_analysis_data || payload.args || {};
-        const userSentiment = analysis.user_sentiment || '';
-        const isSuccessful = analysis.call_successful || customArgs.interested;
+    if (functionName === 'backend' || args.Answered !== undefined) {
+        // This is the main tool call from the voice agent
+        const callRecord = {
+            id: store.calls.length + 1,
+            call_id: callId,
+            timestamp,
+            // Core fields from the VA's 14-parameter backend call
+            answered: args.Answered || null,
+            main_property: args.Main_property || null,
+            meeting_booked: args.Meeting_booked || null,
+            whatsapp_number: args.Whatsapp_number || null,
+            meeting_date: args.Meeting_date || null,
+            meeting_time: args.Meeting_time || null,
+            other_properties: args.Other_properties || null,
+            budget: args.Budget || null,
+            to_sell: args.To_sell || null,
+            sell_type: args.Sell_type || null,
+            sell_name: args.Sell_name || null,
+            sell_bhk: args.Sell_BHK || null,
+            sell_location: args.Sell_location || null,
+            sell_price: args.Sell_price || null
+        };
 
-        propertyPitchStats.totalCalls += 1;
-        propertyPitchStats.answered += 1;
+        store.calls.unshift(callRecord);
+        saveData(store);
 
-        if (isSuccessful || userSentiment.toLowerCase() === 'positive' || customArgs.interested) {
-            propertyPitchStats.interested += 1;
-            if (customArgs.meeting_booked || customArgs.booking_date) {
-                propertyPitchStats.meetingsBooked += 1;
-            }
-        } else {
-            propertyPitchStats.notInterested.total += 1;
-            if (customArgs.looking_for_other) {
-                propertyPitchStats.notInterested.otherProject += 1;
-            } else if (customArgs.looking_to_sell) {
-                propertyPitchStats.notInterested.selling += 1;
-            } else {
-                propertyPitchStats.notInterested.neither += 1;
-            }
-        }
+        console.log(`[Webhook] Call #${callRecord.id} processed. Answered: ${callRecord.answered}, Main Property: ${callRecord.main_property}`);
 
-        // Add to call logs
-        callLogs.unshift({
-            id: callLogs.length + 1,
-            date: new Date().toISOString().replace('T', ' ').substring(0, 16),
-            phone: logEntry.phone,
-            duration: callData.duration_ms ? `${Math.round(callData.duration_ms / 1000)}s` : '1m',
-            outcome: isSuccessful ? 'Interested' : 'Not Interested',
-            badge: isSuccessful ? 'success' : 'danger',
-            notes: analysis.call_summary || customArgs.summary || 'Retell AI Call Completed'
+        return res.status(200).json({
+            status: 'success',
+            message: 'Call data received and stored',
+            call_id: callId,
+            call_number: callRecord.id
         });
     }
 
-    return res.status(200).json({
-        status: 'success',
-        message: 'Webhook received and processed by Retell AI endpoint',
-        event: eventType,
-        received_at: timestamp
-    });
+    // ── Handle post-call / call_ended events from Retell ──
+    if (body.event === 'call_ended' || body.event === 'call_analyzed') {
+        // These are informational; the actual data comes from the backend tool call
+        console.log(`[Webhook] Retell event: ${body.event} for call ${body.call?.call_id || 'unknown'}`);
+        saveData(store);
+        return res.status(200).json({ status: 'success', message: `Event ${body.event} logged` });
+    }
+
+    // ── Fallback: unknown payload ──
+    saveData(store);
+    return res.status(200).json({ status: 'success', message: 'Webhook received (unrecognized format, logged for inspection)' });
 }
 
-// Define Retell Webhook Endpoints
+// Register webhook endpoints
 app.post('/webhook', handleRetellWebhook);
 app.post('/api/webhook', handleRetellWebhook);
 app.post('/api/retell-webhook', handleRetellWebhook);
 app.post('/api/webhooks/retell', handleRetellWebhook);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', service: 'Retell AI Webhook Server', time: new Date() });
-});
-
-// API Endpoints for Dashboard
-app.get('/api/webhook-logs', (req, res) => {
-    res.json({ status: 'success', total: webhookLogs.length, logs: webhookLogs });
-});
-
+// ─── API: Property Pitch Stats (Computed from real data) ────────────────────
 app.get('/api/stats/property-pitch', (req, res) => {
-    res.json(propertyPitchStats);
+    const calls = store.calls;
+
+    const totalCalls = calls.length;
+    const answeredCalls = calls.filter(c => c.answered === 'yes');
+    const notAnswered = calls.filter(c => c.answered === 'no');
+    const answered = answeredCalls.length;
+
+    const interested = answeredCalls.filter(c => c.main_property === 'interested').length;
+    const notInterested = answeredCalls.filter(c => c.main_property === 'not interested').length;
+
+    const meetingsBooked = answeredCalls.filter(c => c.meeting_booked === 'yes').length;
+    const whatsappCaptured = answeredCalls.filter(c => c.whatsapp_number && c.whatsapp_number !== 'null').length;
+
+    const lookingOther = answeredCalls.filter(c => c.other_properties === 'yes').length;
+    const lookingToSell = answeredCalls.filter(c => c.to_sell === 'yes').length;
+    const neitherCount = notInterested - lookingOther - lookingToSell;
+
+    res.json({
+        totalCalls,
+        answered,
+        notAnswered: notAnswered.length,
+        answerRate: totalCalls > 0 ? ((answered / totalCalls) * 100).toFixed(1) : '0.0',
+        interested,
+        interestedRate: answered > 0 ? ((interested / answered) * 100).toFixed(1) : '0.0',
+        notInterested,
+        notInterestedRate: answered > 0 ? ((notInterested / answered) * 100).toFixed(1) : '0.0',
+        meetingsBooked,
+        whatsappCaptured,
+        lookingOther,
+        lookingOtherRate: notInterested > 0 ? ((lookingOther / notInterested) * 100).toFixed(1) : '0.0',
+        lookingToSell,
+        lookingToSellRate: notInterested > 0 ? ((lookingToSell / notInterested) * 100).toFixed(1) : '0.0',
+        neither: Math.max(0, neitherCount),
+        neitherRate: notInterested > 0 ? ((Math.max(0, neitherCount) / notInterested) * 100).toFixed(1) : '0.0',
+        // Funnel data
+        funnel: {
+            answered,
+            interested,
+            meetingsBooked,
+            whatsappCaptured
+        }
+    });
 });
 
-app.get('/api/stats/open-house', (req, res) => {
-    res.json(openHouseStats);
-});
-
+// ─── API: Call Log ──────────────────────────────────────────────────────────
 app.get('/api/calls', (req, res) => {
-    res.json(callLogs);
+    res.json(store.calls);
 });
 
-// Fallback HTML route for SPA / root navigation
+// ─── API: Raw Webhook Logs (for debugging) ──────────────────────────────────
+app.get('/api/webhook-logs', (req, res) => {
+    res.json({ total: store.webhookLogs.length, logs: store.webhookLogs });
+});
+
+// ─── API: Open House Stats (mock for now — agent not configured yet) ────────
+app.get('/api/stats/open-house', (req, res) => {
+    res.json({
+        totalCalls: 0,
+        pickedUp: 0,
+        notPickedUp: 0,
+        saidYes: 0,
+        saidNo: 0,
+        detailsSentWhatsApp: { total: 0, interested: 0, notInterested: 0 },
+        wantsUpdates: 0,
+        doNotContact: 0,
+        callbackRequested: 0,
+        showedUp: 0
+    });
+});
+
+// ─── Fallback for SPA routing ───────────────────────────────────────────────
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
-    console.log(`🚀 Retell Webhook Server running on port ${PORT}`);
-    console.log(`👉 Webhook URL: http://localhost:${PORT}/api/retell-webhook or /webhook`);
+    console.log(`🚀 WNN Realty Webhook Server running on port ${PORT}`);
+    console.log(`📡 Retell Webhook URL: /api/retell-webhook`);
+    console.log(`📊 Total calls in store: ${store.calls.length}`);
 });

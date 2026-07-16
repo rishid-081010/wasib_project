@@ -25,6 +25,7 @@
             </div>
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard'); return false;">Dashboard</a>
+                <a href="#" class="nav-item" id="nav-calendar" onclick="switchTab('calendar'); return false;">Calendar</a>
                 <a href="#" class="nav-item" id="nav-webhooks" onclick="switchTab('webhooks'); return false;">Webhooks</a>
                 <a href="whatsapp.html" class="nav-item">WhatsApp Sandbox</a>
             </nav>
@@ -231,6 +232,59 @@
                                 </tr>
                             </thead>
                             <tbody id="webhook-log-body">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Calendar View -->
+            <section id="calendar-view" class="dashboard-view">
+                <div class="calendar-header-bar">
+                    <h2>Meetings Calendar</h2>
+                    <div class="calendar-nav">
+                        <button class="refresh-btn" onclick="calendarPrev()">← Prev</button>
+                        <span id="calendar-month-label" style="font-size: 1.1rem; font-weight: 600;"></span>
+                        <button class="refresh-btn" onclick="calendarNext()">Next →</button>
+                        <button class="refresh-btn" style="margin-left: 1rem;" onclick="calendarToday()">Today</button>
+                    </div>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div class="glass-card" style="padding: 0; overflow: hidden;">
+                    <div class="calendar-grid">
+                        <div class="cal-day-header">Mon</div>
+                        <div class="cal-day-header">Tue</div>
+                        <div class="cal-day-header">Wed</div>
+                        <div class="cal-day-header">Thu</div>
+                        <div class="cal-day-header">Fri</div>
+                        <div class="cal-day-header">Sat</div>
+                        <div class="cal-day-header">Sun</div>
+                    </div>
+                    <div class="calendar-grid" id="calendar-cells">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Upcoming Meetings List -->
+                <div class="glass-card table-container" style="margin-top: 1.5rem;">
+                    <div class="table-header">
+                        <h3>All Booked Meetings</h3>
+                        <button class="refresh-btn" onclick="loadMeetings()">↻ Refresh</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>WhatsApp Number</th>
+                                    <th>Call ID</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meetings-table-body">
                                 <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</td></tr>
                             </tbody>
                         </table>

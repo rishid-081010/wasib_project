@@ -210,40 +210,169 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// ─── Tab Switching (Dashboard vs Webhooks) ──────────────────────────────────
+// ─── Tab Switching (Dashboard / Calendar / Webhooks) ────────────────────────
 function switchTab(tab) {
-    const dashboardViews = document.querySelectorAll('#property-pitch-view, #open-house-view');
-    const webhooksView = document.getElementById('webhooks-view');
+    const allViews = ['property-pitch-view', 'open-house-view', 'webhooks-view', 'calendar-view'];
     const topHeader = document.querySelector('.top-header');
-    const navDashboard = document.getElementById('nav-dashboard');
-    const navWebhooks = document.getElementById('nav-webhooks');
+    const allNavs = ['nav-dashboard', 'nav-calendar', 'nav-webhooks'];
+
+    // Hide everything
+    allViews.forEach(id => document.getElementById(id).classList.remove('active-view'));
+    allNavs.forEach(id => document.getElementById(id).classList.remove('active'));
+    topHeader.style.display = 'none';
 
     if (tab === 'dashboard') {
-        // Show dashboard content
         topHeader.style.display = 'flex';
         const campaignSelect = document.getElementById('campaign-select');
         if (campaignSelect.value === 'property-pitch') {
             document.getElementById('property-pitch-view').classList.add('active-view');
-            document.getElementById('open-house-view').classList.remove('active-view');
         } else {
-            document.getElementById('property-pitch-view').classList.remove('active-view');
             document.getElementById('open-house-view').classList.add('active-view');
         }
-        webhooksView.classList.remove('active-view');
-
-        navDashboard.classList.add('active');
-        navWebhooks.classList.remove('active');
+        document.getElementById('nav-dashboard').classList.add('active');
+    } else if (tab === 'calendar') {
+        document.getElementById('calendar-view').classList.add('active-view');
+        document.getElementById('nav-calendar').classList.add('active');
+        loadMeetings();
+        renderCalendar();
     } else if (tab === 'webhooks') {
-        // Hide dashboard, show webhooks
-        topHeader.style.display = 'none';
-        document.getElementById('property-pitch-view').classList.remove('active-view');
-        document.getElementById('open-house-view').classList.remove('active-view');
-        webhooksView.classList.add('active-view');
-
-        navDashboard.classList.remove('active');
-        navWebhooks.classList.add('active');
-
+        document.getElementById('webhooks-view').classList.add('active-view');
+        document.getElementById('nav-webhooks').classList.add('active');
         loadWebhookLogs();
+    }
+}
+
+// ─── Calendar State ─────────────────────────────────────────────────────────
+let calendarMonth = new Date().getMonth();
+let calendarYear = new Date().getFullYear();
+let meetingsData = [];
+
+function calendarPrev() {
+    calendarMonth--;
+    if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+    renderCalendar();
+}
+
+function calendarNext() {
+    calendarMonth++;
+    if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+    renderCalendar();
+}
+
+function calendarToday() {
+    calendarMonth = new Date().getMonth();
+    calendarYear = new Date().getFullYear();
+    renderCalendar();
+}
+
+function parseMeetingDate(dateStr) {
+    // Retell sends DD/MM/YYYY
+    if (!dateStr) return null;
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    }
+    return null;
+}
+
+function renderCalendar() {
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    document.getElementById('calendar-month-label').innerText = `${monthNames[calendarMonth]} ${calendarYear}`;
+
+    const container = document.getElementById('calendar-cells');
+    container.innerHTML = '';
+
+    const firstDay = new Date(calendarYear, calendarMonth, 1);
+    const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+    // Monday = 0 offset
+    let startOffset = firstDay.getDay() - 1;
+    if (startOffset < 0) startOffset = 6;
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+    // Build meeting lookup: "YYYY-M-D" -> [meetings]
+    const meetingsByDate = {};
+    meetingsData.forEach(m => {
+        const d = parseMeetingDate(m.date);
+        if (d) {
+            const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            if (!meetingsByDate[key]) meetingsByDate[key] = [];
+            meetingsByDate[key].push(m);
+        }
+    });
+
+    // Previous month fill
+    const prevLastDay = new Date(calendarYear, calendarMonth, 0);
+    for (let i = startOffset - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell other-month';
+        cell.innerHTML = `<div class="cal-date">${prevLastDay.getDate() - i}</div>`;
+        container.appendChild(cell);
+    }
+
+    // Current month
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+        const cell = document.createElement('div');
+        const dateKey = `${calendarYear}-${calendarMonth}-${d}`;
+        const isToday = dateKey === todayStr;
+        cell.className = `cal-cell${isToday ? ' today' : ''}`;
+
+        let inner = `<div class="cal-date">${d}</div>`;
+        if (meetingsByDate[dateKey]) {
+            meetingsByDate[dateKey].forEach(m => {
+                inner += `<div class="cal-meeting">${m.time || '—'} · ${m.whatsapp_number || 'No WA'}</div>`;
+            });
+        }
+        cell.innerHTML = inner;
+        container.appendChild(cell);
+    }
+
+    // Next month fill (to complete the grid row)
+    const totalCells = startOffset + lastDay.getDate();
+    const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let i = 1; i <= remaining; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cal-cell other-month';
+        cell.innerHTML = `<div class="cal-date">${i}</div>`;
+        container.appendChild(cell);
+    }
+}
+
+// ─── Load Meetings from Backend ─────────────────────────────────────────────
+async function loadMeetings() {
+    try {
+        const res = await fetch('/api/meetings');
+        meetingsData = await res.json();
+
+        const tbody = document.getElementById('meetings-table-body');
+        tbody.innerHTML = '';
+
+        if (meetingsData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No meetings booked yet.</td></tr>';
+            renderCalendar();
+            return;
+        }
+
+        meetingsData.forEach(m => {
+            const tr = document.createElement('tr');
+            const meetDate = parseMeetingDate(m.date);
+            const isPast = meetDate && meetDate < new Date(new Date().setHours(0,0,0,0));
+
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td>${m.time || '—'}</td>
+                <td>${m.whatsapp_number || '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+                <td><span class="badge ${isPast ? 'badge-warning' : 'badge-success'}">${isPast ? 'Past' : 'Upcoming'}</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        renderCalendar();
+    } catch (err) {
+        console.error('Error loading meetings:', err);
     }
 }
 

@@ -182,6 +182,21 @@ app.get('/api/calls', (req, res) => {
     res.json(store.calls);
 });
 
+// ─── API: Meetings (calls where meeting_booked = yes) ───────────────────────
+app.get('/api/meetings', (req, res) => {
+    const meetings = store.calls
+        .filter(c => c.meeting_booked === 'yes' && c.meeting_date)
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: c.meeting_date,       // DD/MM/YYYY from Retell
+            time: c.meeting_time,       // HH:MM 24h from Retell
+            whatsapp_number: c.whatsapp_number,
+            timestamp: c.timestamp
+        }));
+    res.json(meetings);
+});
+
 // ─── API: Raw Webhook Logs (for debugging) ──────────────────────────────────
 app.get('/api/webhook-logs', (req, res) => {
     res.json({ total: store.webhookLogs.length, logs: store.webhookLogs });

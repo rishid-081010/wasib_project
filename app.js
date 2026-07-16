@@ -449,6 +449,11 @@ async function loadWebhookLogs() {
             `;
             tbody.appendChild(tr);
         });
+    } catch (err) {
+        console.error('Error loading webhook logs:', err);
+    }
+}
+
 // ─── Fetch Functions for New Tabs ─────────────────────────────────────────────
 async function loadSellingLeads() {
     try {

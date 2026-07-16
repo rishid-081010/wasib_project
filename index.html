@@ -27,6 +27,11 @@
                 <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard'); return false;">Dashboard</a>
                 <a href="#" class="nav-item" id="nav-calendar" onclick="switchTab('calendar'); return false;">Calendar</a>
                 <a href="#" class="nav-item" id="nav-webhooks" onclick="switchTab('webhooks'); return false;">Webhooks</a>
+                <a href="#" class="nav-item" id="nav-selling" onclick="switchTab('selling'); return false;">Looking to Sell</a>
+                <a href="#" class="nav-item" id="nav-other-props" onclick="switchTab('other-props'); return false;">Other Properties</a>
+                <a href="#" class="nav-item" id="nav-callback" onclick="switchTab('callback'); return false;">Call Back</a>
+                <a href="#" class="nav-item" id="nav-crm" onclick="switchTab('crm'); return false;">CRM</a>
+                <a href="#" class="nav-item" id="nav-transcripts" onclick="switchTab('transcripts'); return false;">Call Transcripts</a>
                 <a href="whatsapp.html" class="nav-item">WhatsApp Sandbox</a>
             </nav>
         </aside>
@@ -46,9 +51,8 @@
                 </div>
             </header>
 
-            <!-- Property Pitch View -->
+            <!-- ══════════════════ DASHBOARD VIEW ══════════════════ -->
             <section id="property-pitch-view" class="dashboard-view active-view">
-                <!-- Custom KPI Layout -->
                 <div class="custom-layout-top">
                     <div class="glass-card kpi-card">
                         <span class="kpi-label">Total Outbound Calls</span>
@@ -59,9 +63,7 @@
                         <span class="kpi-value text-blue" id="pp-answer-rate">0% (0)</span>
                     </div>
                 </div>
-
                 <div class="custom-layout-bottom">
-                    <!-- Interested Card -->
                     <div class="glass-card nested-kpi-container">
                         <div class="nested-header">
                             <span class="kpi-label">Interested in Property</span>
@@ -74,8 +76,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Not Interested Card -->
                     <div class="glass-card nested-kpi-container">
                         <div class="nested-header">
                             <span class="kpi-label">Not Interested in Property</span>
@@ -93,153 +93,61 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="charts-row">
-                    <!-- Row 2: Funnel Chart -->
                     <div class="glass-card chart-container">
                         <h3>Outcome Funnel</h3>
-                        <div class="canvas-wrapper">
-                            <canvas id="pp-funnel-chart"></canvas>
-                        </div>
+                        <div class="canvas-wrapper"><canvas id="pp-funnel-chart"></canvas></div>
                     </div>
-                    
-                    <!-- Row 3: Donut Chart -->
                     <div class="glass-card chart-container">
                         <h3>Not Interested Breakdown</h3>
-                        <div class="canvas-wrapper">
-                            <canvas id="pp-donut-chart"></canvas>
-                        </div>
+                        <div class="canvas-wrapper"><canvas id="pp-donut-chart"></canvas></div>
                     </div>
                 </div>
-
-                <!-- Row 4: Raw Call Log Table -->
                 <div class="glass-card table-container">
-                    <div class="table-header">
-                        <h3>Recent Calls</h3>
-                    </div>
+                    <div class="table-header"><h3>Recent Calls</h3></div>
                     <div class="table-wrapper">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Call ID</th>
-                                    <th>Duration</th>
-                                    <th>Outcome</th>
-                                    <th>Notes / Tags</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pp-call-log-body">
-                                <!-- Populated by JS -->
-                            </tbody>
+                            <thead><tr><th>Date</th><th>Call ID</th><th>Duration</th><th>Outcome</th><th>Notes / Tags</th></tr></thead>
+                            <tbody id="pp-call-log-body"></tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- Open House View -->
             <section id="open-house-view" class="dashboard-view">
-                <!-- Row 1: KPI Cards -->
                 <div class="kpi-grid">
-                    <div class="glass-card kpi-card">
-                        <span class="kpi-label">Total Calls Made</span>
-                        <span class="kpi-value" id="oh-total-calls">0</span>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <span class="kpi-label">Calls Picked Up</span>
-                        <span class="kpi-value text-green" id="oh-picked-up">0</span>
-                    </div>
-                    <div class="glass-card kpi-card">
-                        <span class="kpi-label">Calls Not Picked Up</span>
-                        <span class="kpi-value text-red" id="oh-not-picked-up">0</span>
-                    </div>
+                    <div class="glass-card kpi-card"><span class="kpi-label">Total Calls Made</span><span class="kpi-value" id="oh-total-calls">0</span></div>
+                    <div class="glass-card kpi-card"><span class="kpi-label">Calls Picked Up</span><span class="kpi-value text-green" id="oh-picked-up">0</span></div>
+                    <div class="glass-card kpi-card"><span class="kpi-label">Calls Not Picked Up</span><span class="kpi-value text-red" id="oh-not-picked-up">0</span></div>
                 </div>
-
                 <div class="charts-row">
-                    <!-- Main outcomes -->
                     <div class="glass-card chart-container">
                         <h3>Call Outcomes</h3>
                         <div class="stats-list">
-                            <div class="stat-item">
-                                <span class="stat-name">Said Yes (Will Come)</span>
-                                <span class="stat-number text-green" id="oh-yes">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-name">Said No (Not Coming)</span>
-                                <span class="stat-number text-red" id="oh-no">0</span>
-                            </div>
+                            <div class="stat-item"><span class="stat-name">Said Yes (Will Come)</span><span class="stat-number text-green" id="oh-yes">0</span></div>
+                            <div class="stat-item"><span class="stat-name">Said No (Not Coming)</span><span class="stat-number text-red" id="oh-no">0</span></div>
                         </div>
                     </div>
-
-                    <!-- Details Sent -->
                     <div class="glass-card nested-kpi-container">
-                        <div class="nested-header">
-                            <span class="kpi-label">Details Sent on WhatsApp</span>
-                            <span class="kpi-value text-blue" id="oh-details-sent">0</span>
-                        </div>
+                        <div class="nested-header"><span class="kpi-label">Details Sent on WhatsApp</span><span class="kpi-value text-blue" id="oh-details-sent">0</span></div>
                         <div class="nested-cards">
-                            <div class="inner-glass-card">
-                                <span class="kpi-label">Interested (Will Come)</span>
-                                <span class="kpi-value text-green" id="oh-details-interested">0</span>
-                            </div>
-                            <div class="inner-glass-card">
-                                <span class="kpi-label">Not Interested</span>
-                                <span class="kpi-value text-red" id="oh-details-not-interested">0</span>
-                            </div>
+                            <div class="inner-glass-card"><span class="kpi-label">Interested (Will Come)</span><span class="kpi-value text-green" id="oh-details-interested">0</span></div>
+                            <div class="inner-glass-card"><span class="kpi-label">Not Interested</span><span class="kpi-value text-red" id="oh-details-not-interested">0</span></div>
                         </div>
                     </div>
-
-                    <!-- Breakdown & Other -->
                     <div class="glass-card chart-container">
                         <h3>Detailed Breakdown</h3>
                         <div class="stats-list">
-                            <div class="stat-item">
-                                <span class="stat-name">Wants Updates (Next Time)</span>
-                                <span class="stat-number" id="oh-wants-updates">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-name">Don't Contact Again</span>
-                                <span class="stat-number text-red" id="oh-do-not-contact">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-name">Callback Requested</span>
-                                <span class="stat-number text-yellow" id="oh-callback">0</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-name">Showed Up on the Day</span>
-                                <span class="stat-number text-purple" id="oh-showed-up">0</span>
-                            </div>
+                            <div class="stat-item"><span class="stat-name">Wants Updates (Next Time)</span><span class="stat-number" id="oh-wants-updates">0</span></div>
+                            <div class="stat-item"><span class="stat-name">Don't Contact Again</span><span class="stat-number text-red" id="oh-do-not-contact">0</span></div>
+                            <div class="stat-item"><span class="stat-name">Callback Requested</span><span class="stat-number text-yellow" id="oh-callback">0</span></div>
+                            <div class="stat-item"><span class="stat-name">Showed Up on the Day</span><span class="stat-number text-purple" id="oh-showed-up">0</span></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Webhooks View -->
-            <section id="webhooks-view" class="dashboard-view">
-                <div class="glass-card table-container">
-                    <div class="table-header">
-                        <h3>Incoming Webhook Logs</h3>
-                        <button class="refresh-btn" onclick="loadWebhookLogs()">↻ Refresh</button>
-                    </div>
-                    <div class="table-wrapper" style="max-height: 75vh; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Timestamp</th>
-                                    <th>Event / Function</th>
-                                    <th>Call ID</th>
-                                    <th>Raw Payload</th>
-                                </tr>
-                            </thead>
-                            <tbody id="webhook-log-body">
-                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Calendar View -->
+            <!-- ══════════════════ CALENDAR VIEW ══════════════════ -->
             <section id="calendar-view" class="dashboard-view">
                 <div class="calendar-header-bar">
                     <h2>Meetings Calendar</h2>
@@ -250,51 +158,114 @@
                         <button class="refresh-btn" style="margin-left: 1rem;" onclick="calendarToday()">Today</button>
                     </div>
                 </div>
-
-                <!-- Calendar Grid -->
                 <div class="glass-card" style="padding: 0; overflow: hidden;">
                     <div class="calendar-grid">
-                        <div class="cal-day-header">Mon</div>
-                        <div class="cal-day-header">Tue</div>
-                        <div class="cal-day-header">Wed</div>
-                        <div class="cal-day-header">Thu</div>
-                        <div class="cal-day-header">Fri</div>
-                        <div class="cal-day-header">Sat</div>
-                        <div class="cal-day-header">Sun</div>
+                        <div class="cal-day-header">Mon</div><div class="cal-day-header">Tue</div><div class="cal-day-header">Wed</div>
+                        <div class="cal-day-header">Thu</div><div class="cal-day-header">Fri</div><div class="cal-day-header">Sat</div><div class="cal-day-header">Sun</div>
                     </div>
-                    <div class="calendar-grid" id="calendar-cells">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <div class="calendar-grid" id="calendar-cells"></div>
                 </div>
-
-                <!-- Upcoming Meetings List -->
                 <div class="glass-card table-container" style="margin-top: 1.5rem;">
-                    <div class="table-header">
-                        <h3>All Booked Meetings</h3>
-                        <button class="refresh-btn" onclick="loadMeetings()">↻ Refresh</button>
-                    </div>
+                    <div class="table-header"><h3>All Booked Meetings</h3><button class="refresh-btn" onclick="loadMeetings()">↻ Refresh</button></div>
                     <div class="table-wrapper">
                         <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>WhatsApp Number</th>
-                                    <th>Call ID</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="meetings-table-body">
-                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</td></tr>
-                            </tbody>
+                            <thead><tr><th>Date</th><th>Time</th><th>WhatsApp Number</th><th>Call ID</th><th>Status</th></tr></thead>
+                            <tbody id="meetings-table-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
             </section>
+
+            <!-- ══════════════════ WEBHOOKS VIEW ══════════════════ -->
+            <section id="webhooks-view" class="dashboard-view">
+                <div class="glass-card table-container">
+                    <div class="table-header"><h3>Incoming Webhook Logs</h3><button class="refresh-btn" onclick="loadWebhookLogs()">↻ Refresh</button></div>
+                    <div class="table-wrapper" style="max-height: 75vh; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead><tr><th>#</th><th>Timestamp</th><th>Event / Function</th><th>Call ID</th><th>Raw Payload</th></tr></thead>
+                            <tbody id="webhook-log-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════ LOOKING TO SELL VIEW ══════════════════ -->
+            <section id="selling-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Looking to Sell</h2><button class="refresh-btn" onclick="loadSellingLeads()">↻ Refresh</button></div>
+                <div class="glass-card kpi-card" style="margin-bottom: 1.5rem; max-width: 250px;">
+                    <span class="kpi-label">Total Sellers</span>
+                    <span class="kpi-value text-yellow" id="sell-total">0</span>
+                </div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th>Property Type</th><th>Property Name</th><th>BHK</th><th>Location</th><th>Expected Price</th><th>Call ID</th></tr></thead>
+                            <tbody id="sell-table-body"><tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════ LOOKING FOR OTHER PROPERTIES VIEW ══════════════════ -->
+            <section id="other-props-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Looking for Other Properties</h2><button class="refresh-btn" onclick="loadOtherPropsLeads()">↻ Refresh</button></div>
+                <div class="glass-card kpi-card" style="margin-bottom: 1.5rem; max-width: 250px;">
+                    <span class="kpi-label">Total Leads</span>
+                    <span class="kpi-value text-blue" id="other-props-total">0</span>
+                </div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th>Budget</th><th>Call ID</th></tr></thead>
+                            <tbody id="other-props-table-body"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════ CALL BACK VIEW ══════════════════ -->
+            <section id="callback-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Call Back Required</h2><button class="refresh-btn" onclick="loadCallbackLeads()">↻ Refresh</button></div>
+                <div class="glass-card kpi-card" style="margin-bottom: 1.5rem; max-width: 250px;">
+                    <span class="kpi-label">Pending Callbacks</span>
+                    <span class="kpi-value text-red" id="callback-total">0</span>
+                </div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th>Call ID</th><th>Status</th></tr></thead>
+                            <tbody id="callback-table-body"><tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════ CRM VIEW ══════════════════ -->
+            <section id="crm-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>CRM — All Contacts</h2><button class="refresh-btn" onclick="loadCRM()">↻ Refresh</button></div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper" style="max-height: 75vh; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead><tr>
+                                <th>#</th><th>Date</th><th>Answered</th><th>Interest</th><th>Meeting</th><th>WhatsApp</th><th>Budget</th><th>To Sell</th><th>Call ID</th>
+                            </tr></thead>
+                            <tbody id="crm-table-body"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ══════════════════ CALL TRANSCRIPTS VIEW ══════════════════ -->
+            <section id="transcripts-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Call Transcripts</h2><button class="refresh-btn" onclick="loadTranscripts()">↻ Refresh</button></div>
+                <div id="transcripts-container" class="transcripts-list">
+                    <div class="glass-card" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</div>
+                </div>
+            </section>
+
         </main>
     </div>
 
-    <!-- Custom JS -->
     <script src="app.js"></script>
 </body>
 </html>

@@ -210,15 +210,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// ─── Tab Switching (Dashboard / Calendar / Webhooks) ────────────────────────
+// ─── Tab Switching (Dashboard / Calendar / Webhooks / Selling / Other / Callback / CRM / Transcripts)
 function switchTab(tab) {
-    const allViews = ['property-pitch-view', 'open-house-view', 'webhooks-view', 'calendar-view'];
+    const allViews = [
+        'property-pitch-view', 'open-house-view', 'calendar-view', 
+        'webhooks-view', 'selling-view', 'other-props-view', 
+        'callback-view', 'crm-view', 'transcripts-view'
+    ];
+    const allNavs = [
+        'nav-dashboard', 'nav-calendar', 'nav-webhooks', 
+        'nav-selling', 'nav-other-props', 'nav-callback', 
+        'nav-crm', 'nav-transcripts'
+    ];
     const topHeader = document.querySelector('.top-header');
-    const allNavs = ['nav-dashboard', 'nav-calendar', 'nav-webhooks'];
 
     // Hide everything
-    allViews.forEach(id => document.getElementById(id).classList.remove('active-view'));
-    allNavs.forEach(id => document.getElementById(id).classList.remove('active'));
+    allViews.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active-view');
+    });
+    allNavs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
     topHeader.style.display = 'none';
 
     if (tab === 'dashboard') {
@@ -239,6 +253,26 @@ function switchTab(tab) {
         document.getElementById('webhooks-view').classList.add('active-view');
         document.getElementById('nav-webhooks').classList.add('active');
         loadWebhookLogs();
+    } else if (tab === 'selling') {
+        document.getElementById('selling-view').classList.add('active-view');
+        document.getElementById('nav-selling').classList.add('active');
+        loadSellingLeads();
+    } else if (tab === 'other-props') {
+        document.getElementById('other-props-view').classList.add('active-view');
+        document.getElementById('nav-other-props').classList.add('active');
+        loadOtherPropsLeads();
+    } else if (tab === 'callback') {
+        document.getElementById('callback-view').classList.add('active-view');
+        document.getElementById('nav-callback').classList.add('active');
+        loadCallbackLeads();
+    } else if (tab === 'crm') {
+        document.getElementById('crm-view').classList.add('active-view');
+        document.getElementById('nav-crm').classList.add('active');
+        loadCRM();
+    } else if (tab === 'transcripts') {
+        document.getElementById('transcripts-view').classList.add('active-view');
+        document.getElementById('nav-transcripts').classList.add('active');
+        loadTranscripts();
     }
 }
 
@@ -415,7 +449,134 @@ async function loadWebhookLogs() {
             `;
             tbody.appendChild(tr);
         });
-    } catch (err) {
-        console.error('Error loading webhook logs:', err);
-    }
+// ─── Fetch Functions for New Tabs ─────────────────────────────────────────────
+async function loadSellingLeads() {
+    try {
+        const res = await fetch('/api/selling');
+        const data = await res.json();
+        document.getElementById('sell-total').innerText = data.length;
+        const tbody = document.getElementById('sell-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">No sellers yet.</td></tr>';
+            return;
+        }
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td><span class="badge badge-yellow">${m.sell_type || '—'}</span></td>
+                <td>${m.sell_name || '—'}</td>
+                <td>${m.sell_bhk || '—'}</td>
+                <td>${m.sell_location || '—'}</td>
+                <td>${m.sell_price ? 'AED ' + m.sell_price : '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error('Error loadSellingLeads:', e); }
+}
+
+async function loadOtherPropsLeads() {
+    try {
+        const res = await fetch('/api/other-props');
+        const data = await res.json();
+        document.getElementById('other-props-total').innerText = data.length;
+        const tbody = document.getElementById('other-props-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">No leads for other properties yet.</td></tr>';
+            return;
+        }
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td>${m.budget || '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error('Error loadOtherPropsLeads:', e); }
+}
+
+async function loadCallbackLeads() {
+    try {
+        const res = await fetch('/api/callback');
+        const data = await res.json();
+        document.getElementById('callback-total').innerText = data.length;
+        const tbody = document.getElementById('callback-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">No callbacks required.</td></tr>';
+            return;
+        }
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+                <td><span class="badge badge-warning">Pending</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error('Error loadCallbackLeads:', e); }
+}
+
+async function loadCRM() {
+    try {
+        const res = await fetch('/api/calls');
+        const data = await res.json();
+        const tbody = document.getElementById('crm-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">No contacts yet.</td></tr>';
+            return;
+        }
+        // sort newest first
+        data.reverse().forEach(m => {
+            const tr = document.createElement('tr');
+            const dateStr = new Date(m.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            tr.innerHTML = `
+                <td>${m.id}</td>
+                <td>${dateStr}</td>
+                <td>${m.answered === 'yes' ? '✅' : '❌'}</td>
+                <td>${m.main_property === 'yes' ? '✅' : (m.main_property === 'no' ? '❌' : '—')}</td>
+                <td>${m.meeting_booked === 'yes' ? '✅' : '—'}</td>
+                <td>${m.whatsapp_number || '—'}</td>
+                <td>${m.budget || '—'}</td>
+                <td>${m.to_sell === 'yes' ? '✅' : '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (e) { console.error('Error loadCRM:', e); }
+}
+
+async function loadTranscripts() {
+    try {
+        const res = await fetch('/api/transcripts');
+        const data = await res.json();
+        const container = document.getElementById('transcripts-container');
+        container.innerHTML = '';
+        if (data.length === 0) {
+            container.innerHTML = '<div class="glass-card" style="text-align:center;color:var(--text-muted);padding:2rem;">No transcripts available.</div>';
+            return;
+        }
+        data.forEach(m => {
+            const card = document.createElement('div');
+            card.className = 'transcript-card';
+            const dateStr = new Date(m.timestamp).toLocaleString('en-GB');
+            card.innerHTML = `
+                <div class="transcript-meta">
+                    <div>
+                        <strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id}</span>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">${dateStr}</div>
+                </div>
+                <div class="transcript-text">${m.transcript || 'No transcript text available for this call.'}</div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (e) { console.error('Error loadTranscripts:', e); }
 }

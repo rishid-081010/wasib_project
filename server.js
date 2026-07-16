@@ -197,6 +197,67 @@ app.get('/api/meetings', (req, res) => {
     res.json(meetings);
 });
 
+// ─── API: Selling (calls where to_sell = yes) ───────────────────────────────
+app.get('/api/selling', (req, res) => {
+    const selling = store.calls
+        .filter(c => c.to_sell === 'yes')
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: new Date(c.timestamp).toLocaleDateString('en-GB'),
+            sell_type: c.sell_type,
+            sell_name: c.sell_name,
+            sell_bhk: c.sell_bhk,
+            sell_location: c.sell_location,
+            sell_price: c.sell_price,
+            timestamp: c.timestamp
+        }));
+    res.json(selling);
+});
+
+// ─── API: Other Properties (calls where other_properties = yes) ─────────────
+app.get('/api/other-props', (req, res) => {
+    const otherProps = store.calls
+        .filter(c => c.other_properties === 'yes')
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: new Date(c.timestamp).toLocaleDateString('en-GB'),
+            budget: c.budget,
+            timestamp: c.timestamp
+        }));
+    res.json(otherProps);
+});
+
+// ─── API: Callbacks (for now, let's mock or filter calls that were not answered?)
+app.get('/api/callback', (req, res) => {
+    // Retell doesn't have a direct "callback" field in your prompt right now,
+    // so we can use answered = no as a placeholder for callbacks.
+    const callbacks = store.calls
+        .filter(c => c.answered === 'no')
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: new Date(c.timestamp).toLocaleDateString('en-GB'),
+            timestamp: c.timestamp
+        }));
+    res.json(callbacks);
+});
+
+// ─── API: Transcripts (placeholder, returns all calls) ──────────────────────
+app.get('/api/transcripts', (req, res) => {
+    const transcripts = store.calls
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            timestamp: c.timestamp,
+            // Since Retell doesn't send transcript in the `backend` tool call,
+            // we mock it or show a placeholder message.
+            transcript: "Transcript data is currently unavailable in the webhook payload. You can view the full transcript in the Retell AI dashboard for call ID: " + c.call_id
+        }));
+    res.json(transcripts);
+});
+
 // ─── API: Raw Webhook Logs (for debugging) ──────────────────────────────────
 app.get('/api/webhook-logs', (req, res) => {
     res.json({ total: store.webhookLogs.length, logs: store.webhookLogs });

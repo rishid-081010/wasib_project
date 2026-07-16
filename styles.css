@@ -608,18 +608,18 @@ body {
 /* Kanban Board Styling */
 .kanban-board {
     display: flex;
-    gap: 1.5rem;
-    overflow-x: auto;
+    gap: 1rem;
+    overflow-x: hidden;
     padding-bottom: 1rem;
-    min-height: 60vh;
+    height: 75vh; /* Make them taller */
 }
 
 .kanban-column {
     background: rgba(15, 23, 42, 0.4); /* Darker blue background */
     border: 1px solid var(--glass-border);
     border-radius: 1rem;
-    min-width: 280px;
-    width: 280px;
+    flex: 1; /* Automatically split width evenly */
+    min-width: 0; /* Prevents overflow */
     display: flex;
     flex-direction: column;
     padding: 1rem;

@@ -214,11 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchTab(tab) {
     const allViews = [
         'property-pitch-view', 'open-house-view', 'calendar-view', 
-        'webhooks-view', 'selling-view', 'other-props-view', 
+        'webhooks-view', 'interested-view', 'selling-view', 'other-props-view', 
         'callback-view', 'crm-view', 'transcripts-view'
     ];
     const allNavs = [
-        'nav-dashboard', 'nav-calendar', 'nav-webhooks', 
+        'nav-dashboard', 'nav-calendar', 'nav-webhooks', 'nav-interested',
         'nav-selling', 'nav-other-props', 'nav-callback', 
         'nav-crm', 'nav-transcripts'
     ];
@@ -253,6 +253,10 @@ function switchTab(tab) {
         document.getElementById('webhooks-view').classList.add('active-view');
         document.getElementById('nav-webhooks').classList.add('active');
         loadWebhookLogs();
+    } else if (tab === 'interested') {
+        document.getElementById('interested-view').classList.add('active-view');
+        document.getElementById('nav-interested').classList.add('active');
+        loadInterestedLeads();
     } else if (tab === 'selling') {
         document.getElementById('selling-view').classList.add('active-view');
         document.getElementById('nav-selling').classList.add('active');
@@ -455,6 +459,36 @@ async function loadWebhookLogs() {
 }
 
 // ─── Fetch Functions for New Tabs ─────────────────────────────────────────────
+async function loadInterestedLeads() {
+    try {
+        const res = await fetch('/api/interested');
+        const data = await res.json();
+        document.getElementById('interested-total').innerText = data.length;
+        const tbody = document.getElementById('interested-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">No interested leads yet.</td></tr>';
+            return;
+        }
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+            const meetingStatus = m.meeting_booked === 'yes' 
+                ? '<span class="badge badge-success">Booked</span>'
+                : '<span class="badge badge-warning">Pending</span>';
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+                <td>${m.whatsapp_number ? m.whatsapp_number : '<span style="color:var(--text-muted)">—</span>'}</td>
+                <td>${m.budget || '—'}</td>
+                <td>${meetingStatus}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error loading interested leads:', err);
+    }
+}
+
 async function loadSellingLeads() {
     try {
         const res = await fetch('/api/selling');

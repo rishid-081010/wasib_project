@@ -27,6 +27,7 @@
                 <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard'); return false;">Dashboard</a>
                 <a href="#" class="nav-item" id="nav-calendar" onclick="switchTab('calendar'); return false;">Calendar</a>
                 <a href="#" class="nav-item" id="nav-webhooks" onclick="switchTab('webhooks'); return false;">Webhooks</a>
+                <a href="#" class="nav-item" id="nav-interested" onclick="switchTab('interested'); return false;">Interested</a>
                 <a href="#" class="nav-item" id="nav-selling" onclick="switchTab('selling'); return false;">Looking to Sell</a>
                 <a href="#" class="nav-item" id="nav-other-props" onclick="switchTab('other-props'); return false;">Other Properties</a>
                 <a href="#" class="nav-item" id="nav-callback" onclick="switchTab('callback'); return false;">Call Back</a>
@@ -206,6 +207,23 @@
                 </div>
             </section>
 
+            <!-- ══════════════════ INTERESTED VIEW ══════════════════ -->
+            <section id="interested-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Interested Leads</h2><button class="refresh-btn" onclick="loadInterestedLeads()">↻ Refresh</button></div>
+                <div class="glass-card kpi-card" style="margin-bottom: 1.5rem; max-width: 250px;">
+                    <span class="kpi-label">Total Interested</span>
+                    <span class="kpi-value" id="interested-total">0</span>
+                </div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th>Call ID</th><th>WhatsApp</th><th>Budget</th><th>Meeting Booked</th></tr></thead>
+                            <tbody id="interested-table-body"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- ══════════════════ LOOKING FOR OTHER PROPERTIES VIEW ══════════════════ -->
             <section id="other-props-view" class="dashboard-view">
                 <div class="section-header-bar"><h2>Looking for Other Properties</h2><button class="refresh-btn" onclick="loadOtherPropsLeads()">↻ Refresh</button></div>
@@ -247,7 +265,7 @@
                     <!-- Column 1: Interested -->
                     <div class="kanban-column">
                         <div class="kanban-header">
-                            <span class="kanban-title text-green" style="cursor: pointer;" onclick="switchTab('dashboard')" title="Go to Dashboard">Interested</span>
+                            <span class="kanban-title text-green" style="cursor: pointer;" onclick="switchTab('interested')" title="Go to Interested">Interested</span>
                             <span class="kanban-count" id="kb-count-interested">0</span>
                         </div>
                         <div class="kanban-cards-container" id="kb-col-interested"></div>

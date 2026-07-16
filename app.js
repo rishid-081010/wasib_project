@@ -209,3 +209,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 15000);
 
 });
+
+// ─── Tab Switching (Dashboard vs Webhooks) ──────────────────────────────────
+function switchTab(tab) {
+    const dashboardViews = document.querySelectorAll('#property-pitch-view, #open-house-view');
+    const webhooksView = document.getElementById('webhooks-view');
+    const topHeader = document.querySelector('.top-header');
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navWebhooks = document.getElementById('nav-webhooks');
+
+    if (tab === 'dashboard') {
+        // Show dashboard content
+        topHeader.style.display = 'flex';
+        const campaignSelect = document.getElementById('campaign-select');
+        if (campaignSelect.value === 'property-pitch') {
+            document.getElementById('property-pitch-view').classList.add('active-view');
+            document.getElementById('open-house-view').classList.remove('active-view');
+        } else {
+            document.getElementById('property-pitch-view').classList.remove('active-view');
+            document.getElementById('open-house-view').classList.add('active-view');
+        }
+        webhooksView.classList.remove('active-view');
+
+        navDashboard.classList.add('active');
+        navWebhooks.classList.remove('active');
+    } else if (tab === 'webhooks') {
+        // Hide dashboard, show webhooks
+        topHeader.style.display = 'none';
+        document.getElementById('property-pitch-view').classList.remove('active-view');
+        document.getElementById('open-house-view').classList.remove('active-view');
+        webhooksView.classList.add('active-view');
+
+        navDashboard.classList.remove('active');
+        navWebhooks.classList.add('active');
+
+        loadWebhookLogs();
+    }
+}
+
+// ─── Webhook Logs Fetcher ───────────────────────────────────────────────────
+async function loadWebhookLogs() {
+    try {
+        const res = await fetch('/api/webhook-logs');
+        const data = await res.json();
+        const tbody = document.getElementById('webhook-log-body');
+        tbody.innerHTML = '';
+
+        if (!data.logs || data.logs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">No webhooks received yet.</td></tr>';
+            return;
+        }
+
+        data.logs.forEach(log => {
+            const tr = document.createElement('tr');
+            const dateStr = new Date(log.timestamp).toLocaleString('en-GB', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            const raw = log.raw || {};
+            const eventName = raw.name || raw.event || 'unknown';
+            const callId = raw.call_id || raw.call?.call_id || '—';
+            const payloadStr = JSON.stringify(raw, null, 2);
+
+            tr.innerHTML = `
+                <td>${log.id}</td>
+                <td>${dateStr}</td>
+                <td><span class="badge badge-blue">${eventName}</span></td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${callId.length > 16 ? callId.substring(0, 16) + '...' : callId}</td>
+                <td>
+                    <details>
+                        <summary style="cursor: pointer; color: var(--primary);">View Payload</summary>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem; overflow-x: auto; font-size: 0.75rem; max-height: 300px; overflow-y: auto; color: #22c55e;">${payloadStr}</pre>
+                    </details>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error loading webhook logs:', err);
+    }
+}

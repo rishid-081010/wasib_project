@@ -24,7 +24,8 @@
                 <h2>WNN Realty AI</h2>
             </div>
             <nav class="sidebar-nav">
-                <a href="index.html" class="nav-item active">Dashboard</a>
+                <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard'); return false;">Dashboard</a>
+                <a href="#" class="nav-item" id="nav-webhooks" onclick="switchTab('webhooks'); return false;">Webhooks</a>
                 <a href="whatsapp.html" class="nav-item">WhatsApp Sandbox</a>
             </nav>
         </aside>
@@ -207,6 +208,32 @@
                                 <span class="stat-number text-purple" id="oh-showed-up">0</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Webhooks View -->
+            <section id="webhooks-view" class="dashboard-view">
+                <div class="glass-card table-container">
+                    <div class="table-header">
+                        <h3>Incoming Webhook Logs</h3>
+                        <button class="refresh-btn" onclick="loadWebhookLogs()">↻ Refresh</button>
+                    </div>
+                    <div class="table-wrapper" style="max-height: 75vh; overflow-y: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Timestamp</th>
+                                    <th>Event / Function</th>
+                                    <th>Call ID</th>
+                                    <th>Raw Payload</th>
+                                </tr>
+                            </thead>
+                            <tbody id="webhook-log-body">
+                                <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>

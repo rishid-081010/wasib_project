@@ -527,29 +527,69 @@ async function loadCRM() {
     try {
         const res = await fetch('/api/calls');
         const data = await res.json();
-        const tbody = document.getElementById('crm-table-body');
-        tbody.innerHTML = '';
+        
+        const colInterested = document.getElementById('kb-col-interested');
+        const colOther = document.getElementById('kb-col-other');
+        const colSell = document.getElementById('kb-col-sell');
+        const colCallback = document.getElementById('kb-col-callback');
+        const colNoAnswer = document.getElementById('kb-col-noanswer');
+
+        // Clear columns
+        [colInterested, colOther, colSell, colCallback, colNoAnswer].forEach(col => col.innerHTML = '');
+        let counts = { interested: 0, other: 0, sell: 0, callback: 0, noanswer: 0 };
+
         if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">No contacts yet.</td></tr>';
+            colInterested.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">No leads yet.</div>';
             return;
         }
-        // sort newest first
-        data.reverse().forEach(m => {
-            const tr = document.createElement('tr');
-            const dateStr = new Date(m.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-            tr.innerHTML = `
-                <td>${m.id}</td>
-                <td>${dateStr}</td>
-                <td>${m.answered === 'yes' ? '✅' : '❌'}</td>
-                <td>${m.main_property === 'yes' ? '✅' : (m.main_property === 'no' ? '❌' : '—')}</td>
-                <td>${m.meeting_booked === 'yes' ? '✅' : '—'}</td>
-                <td>${m.whatsapp_number || '—'}</td>
-                <td>${m.budget || '—'}</td>
-                <td>${m.to_sell === 'yes' ? '✅' : '—'}</td>
-                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+
+        // Helper to create a card
+        const createCard = (m) => {
+            const dateStr = new Date(m.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            return `
+                <div class="kanban-card">
+                    <div class="kanban-card-header">
+                        <span class="kanban-card-title">Lead #${m.id}</span>
+                        <span class="kanban-card-date">${dateStr}</span>
+                    </div>
+                    <div class="kanban-card-detail"><strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id ? m.call_id.substring(0, 10) + '...' : '—'}</span></div>
+                    ${m.whatsapp_number ? `<div class="kanban-card-detail"><strong>WhatsApp:</strong> ${m.whatsapp_number}</div>` : ''}
+                    ${m.budget ? `<div class="kanban-card-detail"><strong>Budget:</strong> ${m.budget}</div>` : ''}
+                    <div class="kanban-card-footer">
+                        ${m.whatsapp_number ? '<span class="badge badge-green" style="font-size:0.65rem;">WhatsApp Link</span>' : '<span class="badge badge-warning" style="font-size:0.65rem;">No WA</span>'}
+                    </div>
+                </div>
             `;
-            tbody.appendChild(tr);
+        };
+
+        // Categorize cards (newest first)
+        data.reverse().forEach(m => {
+            if (m.answered === 'no') {
+                colNoAnswer.innerHTML += createCard(m);
+                counts.noanswer++;
+            } else if (m.main_property === 'yes') {
+                colInterested.innerHTML += createCard(m);
+                counts.interested++;
+            } else if (m.to_sell === 'yes') {
+                colSell.innerHTML += createCard(m);
+                counts.sell++;
+            } else if (m.other_properties === 'yes') {
+                colOther.innerHTML += createCard(m);
+                counts.other++;
+            } else {
+                // If they answered but didn't fit above, default to Callback for now
+                colCallback.innerHTML += createCard(m);
+                counts.callback++;
+            }
         });
+
+        // Update counts
+        document.getElementById('kb-count-interested').innerText = counts.interested;
+        document.getElementById('kb-count-other').innerText = counts.other;
+        document.getElementById('kb-count-sell').innerText = counts.sell;
+        document.getElementById('kb-count-callback').innerText = counts.callback;
+        document.getElementById('kb-count-noanswer').innerText = counts.noanswer;
+
     } catch (e) { console.error('Error loadCRM:', e); }
 }
 

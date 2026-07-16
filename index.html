@@ -242,15 +242,51 @@
 
             <!-- ══════════════════ CRM VIEW ══════════════════ -->
             <section id="crm-view" class="dashboard-view">
-                <div class="section-header-bar"><h2>CRM — All Contacts</h2><button class="refresh-btn" onclick="loadCRM()">↻ Refresh</button></div>
-                <div class="glass-card table-container">
-                    <div class="table-wrapper" style="max-height: 75vh; overflow-y: auto;">
-                        <table class="data-table">
-                            <thead><tr>
-                                <th>#</th><th>Date</th><th>Answered</th><th>Interest</th><th>Meeting</th><th>WhatsApp</th><th>Budget</th><th>To Sell</th><th>Call ID</th>
-                            </tr></thead>
-                            <tbody id="crm-table-body"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
-                        </table>
+                <div class="section-header-bar"><h2>CRM Kanban Board</h2><button class="refresh-btn" onclick="loadCRM()">↻ Refresh Kanban</button></div>
+                <div class="kanban-board">
+                    <!-- Column 1: Interested -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-title text-green">Interested</span>
+                            <span class="kanban-count" id="kb-count-interested">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kb-col-interested"></div>
+                    </div>
+                    
+                    <!-- Column 2: Looking for other properties -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-title text-blue">Other Properties</span>
+                            <span class="kanban-count" id="kb-count-other">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kb-col-other"></div>
+                    </div>
+                    
+                    <!-- Column 3: Looking to sell -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-title text-yellow">Looking to Sell</span>
+                            <span class="kanban-count" id="kb-count-sell">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kb-col-sell"></div>
+                    </div>
+                    
+                    <!-- Column 4: Call back -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-title text-purple">Call Back</span>
+                            <span class="kanban-count" id="kb-count-callback">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kb-col-callback"></div>
+                    </div>
+                    
+                    <!-- Column 5: Didnt answer -->
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <span class="kanban-title text-red">Didn't Answer</span>
+                            <span class="kanban-count" id="kb-count-noanswer">0</span>
+                        </div>
+                        <div class="kanban-cards-container" id="kb-col-noanswer"></div>
                     </div>
                 </div>
             </section>

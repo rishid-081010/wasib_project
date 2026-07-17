@@ -148,10 +148,24 @@ function handleRetellWebhook(req, res) {
         });
     }
 
-    // ── Handle post-call / call_ended events from Retell ──
+    // ── Handle post-call / call_ended / call_analyzed events from Retell ──
     if (body.event === 'call_ended' || body.event === 'call_analyzed') {
-        // These are informational; the actual data comes from the backend tool call
         console.log(`[Webhook] Retell event: ${body.event} for call ${body.call?.call_id || 'unknown'}`);
+        
+        // If it's the analyzed event, we can capture the recording URL
+        if (body.event === 'call_analyzed' && body.call?.call_id) {
+            const callId = body.call.call_id;
+            const recordingUrl = body.call.recording_url;
+            
+            if (recordingUrl) {
+                const existingCall = store.calls.find(c => c.call_id === callId);
+                if (existingCall) {
+                    existingCall.recording_url = recordingUrl;
+                    console.log(`[Webhook] Attached recording_url to call ${callId}`);
+                }
+            }
+        }
+
         saveData(store);
         return res.status(200).json({ status: 'success', message: `Event ${body.event} logged` });
     }

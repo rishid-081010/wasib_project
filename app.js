@@ -741,6 +741,18 @@ function openLeadModal(dataStr) {
             addRow('Callback Requested', m.callback_requested);
         }
 
+        if (m.recording_url) {
+            html += `
+                <div class="modal-detail-row" style="flex-direction: column; align-items: flex-start; gap: 0.5rem; border-bottom: none; margin-top: 1rem;">
+                    <span class="modal-detail-label">Call Recording</span>
+                    <audio controls style="width: 100%; height: 40px; border-radius: 8px;">
+                        <source src="${m.recording_url}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+            `;
+        }
+
         bodyEl.innerHTML = html;
         modal.style.display = 'flex';
     } catch (e) {

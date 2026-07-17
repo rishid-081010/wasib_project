@@ -62,7 +62,7 @@ function handleRetellWebhook(req, res) {
     // ── Handle the "backend" tool call from the VA ──
     const functionName = body.name;
     const args = body.args || {};
-    const callId = body.call_id || `call_${Date.now()}`;
+    const callId = body.call?.call_id || body.call_id || `call_${Date.now()}`;
 
     if (functionName === 'unanswered') {
         const callRecord = {
@@ -152,16 +152,18 @@ function handleRetellWebhook(req, res) {
     if (body.event === 'call_ended' || body.event === 'call_analyzed') {
         console.log(`[Webhook] Retell event: ${body.event} for call ${body.call?.call_id || 'unknown'}`);
         
-        // If it's the analyzed event, we can capture the recording URL
+        // If it's the analyzed event, we can capture the recording URL and transcript
         if (body.event === 'call_analyzed' && body.call?.call_id) {
             const callId = body.call.call_id;
             const recordingUrl = body.call.recording_url;
+            const transcriptObj = body.call.transcript_object;
             
-            if (recordingUrl) {
+            if (recordingUrl || transcriptObj) {
                 const existingCall = store.calls.find(c => c.call_id === callId);
                 if (existingCall) {
-                    existingCall.recording_url = recordingUrl;
-                    console.log(`[Webhook] Attached recording_url to call ${callId}`);
+                    if (recordingUrl) existingCall.recording_url = recordingUrl;
+                    if (transcriptObj) existingCall.transcript_object = transcriptObj;
+                    console.log(`[Webhook] Attached recording/transcript to call ${callId}`);
                 }
             }
         }
@@ -190,8 +192,8 @@ app.get('/api/stats/property-pitch', (req, res) => {
     const notAnswered = calls.filter(c => c.answered === 'no');
     const answered = answeredCalls.length;
 
-    const interested = answeredCalls.filter(c => c.main_property === 'interested').length;
-    const notInterested = answeredCalls.filter(c => c.main_property === 'not interested').length;
+    const interested = answeredCalls.filter(c => c.main_property === 'yes').length;
+    const notInterested = answeredCalls.filter(c => c.main_property === 'no').length;
 
     const meetingsBooked = answeredCalls.filter(c => c.meeting_booked === 'yes').length;
     const whatsappCaptured = answeredCalls.filter(c => c.whatsapp_number && c.whatsapp_number !== 'null').length;
@@ -307,16 +309,15 @@ app.get('/api/unanswered', (req, res) => {
     res.json(unanswered);
 });
 
-// ─── API: Transcripts (placeholder, returns all calls) ──────────────────────
+// ─── API: Transcripts ───────────────────────────────────────────────────────
 app.get('/api/transcripts', (req, res) => {
     const transcripts = store.calls
         .map(c => ({
             id: c.id,
             call_id: c.call_id,
             timestamp: c.timestamp,
-            // Since Retell doesn't send transcript in the `backend` tool call,
-            // we mock it or show a placeholder message.
-            transcript: "Transcript data is currently unavailable in the webhook payload. You can view the full transcript in the Retell AI dashboard for call ID: " + c.call_id
+            transcript_object: c.transcript_object || null,
+            transcript: "Transcript data is currently unavailable. Waiting for call_analyzed webhook."
         }));
     res.json(transcripts);
 });

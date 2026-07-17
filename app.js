@@ -678,6 +678,22 @@ async function loadTranscripts() {
             const card = document.createElement('div');
             card.className = 'transcript-card';
             const dateStr = new Date(m.timestamp).toLocaleString('en-GB');
+            let transcriptHtml = '';
+            if (m.transcript_object && Array.isArray(m.transcript_object)) {
+                transcriptHtml = '<div class="wa-chat-window" style="height: auto; max-height: 400px; border: none; background: transparent;">';
+                transcriptHtml += '<div class="wa-messages" style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 0.5rem; gap: 1rem;">';
+                m.transcript_object.forEach(msg => {
+                    if (msg.role === 'agent') {
+                        transcriptHtml += `<div class="msg-bubble msg-out" style="background: var(--primary); color: white; align-self: flex-start; max-width: 85%; font-size: 0.95rem; line-height: 1.5; padding: 0.75rem 1rem; border-radius: 1rem; border-top-left-radius: 0;"><strong>Agent:</strong><br>${msg.content}</div>`;
+                    } else if (msg.role === 'user') {
+                        transcriptHtml += `<div class="msg-bubble msg-in" style="background: rgba(255,255,255,0.1); color: var(--text-main); align-self: flex-end; max-width: 85%; font-size: 0.95rem; line-height: 1.5; padding: 0.75rem 1rem; border-radius: 1rem; border-top-right-radius: 0;"><strong>User:</strong><br>${msg.content}</div>`;
+                    }
+                });
+                transcriptHtml += '</div></div>';
+            } else {
+                transcriptHtml = `<div class="transcript-text">${m.transcript || 'No transcript text available yet.'}</div>`;
+            }
+
             card.innerHTML = `
                 <div class="transcript-meta">
                     <div>
@@ -685,7 +701,7 @@ async function loadTranscripts() {
                     </div>
                     <div style="color: var(--text-muted); font-size: 0.9rem;">${dateStr}</div>
                 </div>
-                <div class="transcript-text">${m.transcript || 'No transcript text available for this call.'}</div>
+                ${transcriptHtml}
             `;
             container.appendChild(card);
         });
@@ -768,4 +784,8 @@ function openLeadModal(callId) {
 function closeLeadModal() {
     document.getElementById('lead-modal').style.display = 'none';
 }
+
+// Ensure globally accessible
+window.openLeadModal = openLeadModal;
+window.closeLeadModal = closeLeadModal;
 

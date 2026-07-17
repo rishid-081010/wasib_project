@@ -309,6 +309,22 @@ app.get('/api/unanswered', (req, res) => {
     res.json(unanswered);
 });
 
+// ─── API: Interested Leads ──────────────────────────────────────────────────
+app.get('/api/interested', (req, res) => {
+    const interested = store.calls
+        .filter(c => c.main_property === 'yes')
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: new Date(c.timestamp).toLocaleDateString('en-GB'),
+            whatsapp_number: c.whatsapp_number,
+            budget: c.budget,
+            meeting_booked: c.meeting_booked,
+            timestamp: c.timestamp
+        }));
+    res.json(interested);
+});
+
 // ─── API: Transcripts ───────────────────────────────────────────────────────
 app.get('/api/transcripts', (req, res) => {
     const transcripts = store.calls

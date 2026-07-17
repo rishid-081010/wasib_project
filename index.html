@@ -338,6 +338,19 @@
         </main>
     </div>
 
+    <!-- ══════════════════ LEAD DETAILS MODAL ══════════════════ -->
+    <div id="lead-modal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeLeadModal()">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 id="modal-lead-name">Lead Details</h2>
+                <button class="modal-close" onclick="closeLeadModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-lead-body">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

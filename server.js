@@ -119,6 +119,7 @@ function handleRetellWebhook(req, res) {
             // Core fields from the VA's backend call
             answered: 'yes', // Since backend is called, they must have answered
             callback_requested: 'no',
+            customer_name: args.Name || args.Customer_name || args.Customer_Name || null,
             main_property: normalizedMainProperty,
             meeting_booked: args.Meeting_booked || null,
             whatsapp_number: args.Whatsapp_number || null,

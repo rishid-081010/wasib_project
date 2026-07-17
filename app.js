@@ -613,17 +613,19 @@ async function loadCRM() {
         // Helper to create a card
         const createCard = (m) => {
             const dateStr = new Date(m.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const title = m.customer_name ? m.customer_name : 'Lead #' + m.id;
+            const dataStr = encodeURIComponent(JSON.stringify(m));
             return `
                 <div class="kanban-card">
                     <div class="kanban-card-header">
-                        <span class="kanban-card-title">Lead #${m.id}</span>
+                        <span class="kanban-card-title" style="cursor:pointer; color:var(--primary); text-decoration:underline;" onclick="openLeadModal('${dataStr}')">${title}</span>
                         <span class="kanban-card-date">${dateStr}</span>
                     </div>
                     <div class="kanban-card-detail"><strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id ? m.call_id.substring(0, 10) + '...' : '—'}</span></div>
                     ${m.whatsapp_number ? `<div class="kanban-card-detail"><strong>WhatsApp:</strong> ${m.whatsapp_number}</div>` : ''}
                     ${m.budget ? `<div class="kanban-card-detail"><strong>Budget:</strong> ${m.budget}</div>` : ''}
                     <div class="kanban-card-footer">
-                        ${m.whatsapp_number ? '<span class="badge badge-green" style="font-size:0.65rem;">WhatsApp Link</span>' : '<span class="badge badge-warning" style="font-size:0.65rem;">No WA</span>'}
+                        ${m.whatsapp_number ? '<span class="badge badge-green" style="font-size:0.65rem;">WhatsApp Linked</span>' : '<span class="badge badge-warning" style="font-size:0.65rem;" title="No WhatsApp number captured">No WhatsApp</span>'}
                     </div>
                 </div>
             `;
@@ -687,3 +689,66 @@ async function loadTranscripts() {
         });
     } catch (e) { console.error('Error loadTranscripts:', e); }
 }
+
+// ─── Modal Logic ────────────────────────────────────────────────────────────
+function openLeadModal(dataStr) {
+    try {
+        const m = JSON.parse(decodeURIComponent(dataStr));
+        const modal = document.getElementById('lead-modal');
+        const titleEl = document.getElementById('modal-lead-name');
+        const bodyEl = document.getElementById('modal-lead-body');
+
+        const title = m.customer_name ? m.customer_name : 'Lead #' + m.id;
+        titleEl.innerText = title;
+
+        const dateStr = new Date(m.timestamp).toLocaleString('en-GB', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+
+        // Build details HTML
+        let html = '';
+        const addRow = (label, value) => {
+            if (value && value !== 'null') {
+                html += `
+                    <div class="modal-detail-row">
+                        <span class="modal-detail-label">${label}</span>
+                        <span class="modal-detail-value">${value}</span>
+                    </div>
+                `;
+            }
+        };
+
+        addRow('Lead ID', m.id);
+        addRow('Date', dateStr);
+        addRow('Call ID', m.call_id);
+        addRow('Answered', m.answered === 'yes' ? 'Yes' : 'No');
+        
+        if (m.answered === 'yes') {
+            addRow('Interested (Main Property)', m.main_property);
+            addRow('Meeting Booked', m.meeting_booked);
+            addRow('Meeting Date', m.meeting_date);
+            addRow('Meeting Time', m.meeting_time);
+            addRow('WhatsApp Number', m.whatsapp_number);
+            addRow('Looking for Other', m.other_properties);
+            addRow('Budget', m.budget);
+            addRow('Looking to Sell', m.to_sell);
+            addRow('Sell Property Type', m.sell_type);
+            addRow('Sell Property Name', m.sell_name);
+            addRow('Sell BHK', m.sell_bhk);
+            addRow('Sell Location', m.sell_location);
+            addRow('Sell Expected Price', m.sell_price);
+            addRow('Callback Requested', m.callback_requested);
+        }
+
+        bodyEl.innerHTML = html;
+        modal.style.display = 'flex';
+    } catch (e) {
+        console.error('Error opening modal:', e);
+    }
+}
+
+function closeLeadModal() {
+    document.getElementById('lead-modal').style.display = 'none';
+}
+

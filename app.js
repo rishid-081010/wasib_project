@@ -690,22 +690,34 @@ async function loadTranscripts() {
                     }
                 });
                 transcriptHtml += '</div></div>';
-            } else {
-                transcriptHtml = `<div class="transcript-text">${m.transcript || 'No transcript text available yet.'}</div>`;
             }
 
             card.innerHTML = `
-                <div class="transcript-meta">
+                <div class="transcript-meta" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <div>
-                        <strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id}</span>
+                        <div><strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id}</span></div>
+                        <div style="color: var(--text-muted); font-size: 0.9rem;">${dateStr}</div>
                     </div>
-                    <div style="color: var(--text-muted); font-size: 0.9rem;">${dateStr}</div>
+                    <button class="btn btn-primary" onclick="toggleTranscript(this)" style="padding: 0.5rem 1rem; font-size: 0.85rem;">View Transcript ▼</button>
                 </div>
-                ${transcriptHtml}
+                <div class="transcript-body" style="display: none; margin-top: 1rem; animation: fadeIn 0.3s ease;">
+                    ${transcriptHtml}
+                </div>
             `;
             container.appendChild(card);
         });
     } catch (e) { console.error('Error loadTranscripts:', e); }
+}
+
+function toggleTranscript(btn) {
+    const body = btn.parentElement.nextElementSibling;
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        btn.innerText = 'Hide Transcript ▲';
+    } else {
+        body.style.display = 'none';
+        btn.innerText = 'View Transcript ▼';
+    }
 }
 
 // ─── Modal Logic ────────────────────────────────────────────────────────────
@@ -788,4 +800,5 @@ function closeLeadModal() {
 // Ensure globally accessible
 window.openLeadModal = openLeadModal;
 window.closeLeadModal = closeLeadModal;
+window.toggleTranscript = toggleTranscript;
 

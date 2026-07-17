@@ -603,10 +603,11 @@ async function loadCRM() {
         const colSell = document.getElementById('kb-col-sell');
         const colCallback = document.getElementById('kb-col-callback');
         const colUnanswered = document.getElementById('kb-col-unanswered');
+        const colNotInterested = document.getElementById('kb-col-not-interested');
 
         // Clear columns
-        [colInterested, colOther, colSell, colCallback, colUnanswered].forEach(col => col.innerHTML = '');
-        let counts = { interested: 0, other: 0, sell: 0, callback: 0, unanswered: 0 };
+        [colInterested, colOther, colSell, colCallback, colUnanswered, colNotInterested].forEach(col => { if(col) col.innerHTML = ''; });
+        let counts = { interested: 0, other: 0, sell: 0, callback: 0, unanswered: 0, notInterested: 0 };
 
         if (data.length === 0) {
             colInterested.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">No leads yet.</div>';
@@ -647,6 +648,9 @@ async function loadCRM() {
             } else if (m.other_properties === 'yes') {
                 colOther.innerHTML += createCard(m);
                 counts.other++;
+            } else if (m.answered === 'yes' && m.main_property !== 'yes' && m.to_sell !== 'yes' && m.other_properties !== 'yes') {
+                if (colNotInterested) colNotInterested.innerHTML += createCard(m);
+                counts.notInterested++;
             } else {
                 // If they answered but didn't fit above, default to Callback for now
                 colCallback.innerHTML += createCard(m);
@@ -660,6 +664,9 @@ async function loadCRM() {
         document.getElementById('kb-count-sell').innerText = counts.sell;
         document.getElementById('kb-count-callback').innerText = counts.callback;
         document.getElementById('kb-count-unanswered').innerText = counts.unanswered;
+        if (document.getElementById('kb-count-not-interested')) {
+            document.getElementById('kb-count-not-interested').innerText = counts.notInterested;
+        }
 
     } catch (e) { console.error('Error loadCRM:', e); }
 }

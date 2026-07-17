@@ -677,6 +677,7 @@ async function loadTranscripts() {
         data.forEach(m => {
             const card = document.createElement('div');
             card.className = 'transcript-card';
+            card.id = 'transcript-card-' + m.call_id;
             const dateStr = new Date(m.timestamp).toLocaleString('en-GB');
             let transcriptHtml = '';
             if (m.transcript_object && Array.isArray(m.transcript_object)) {
@@ -786,6 +787,14 @@ function openLeadModal(callId) {
             `;
         }
 
+        html += `
+            <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+                <button class="btn btn-primary" style="width: 100%; padding: 0.75rem; justify-content: center;" onclick="jumpToTranscript('${m.call_id}')">
+                    View Full Transcript
+                </button>
+            </div>
+        `;
+
         bodyEl.innerHTML = html;
         modal.style.display = 'flex';
     } catch (e) {
@@ -797,8 +806,31 @@ function closeLeadModal() {
     document.getElementById('lead-modal').style.display = 'none';
 }
 
+function jumpToTranscript(callId) {
+    closeLeadModal();
+    switchTab('transcripts');
+    // Give it a moment to fetch/render, then scroll to it
+    setTimeout(() => {
+        const card = document.getElementById('transcript-card-' + callId);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Flash effect to highlight it
+            card.style.transition = 'box-shadow 0.3s ease';
+            card.style.boxShadow = '0 0 20px var(--primary)';
+            setTimeout(() => card.style.boxShadow = 'none', 1500);
+            
+            // Auto expand the transcript
+            const btn = card.querySelector('.btn-primary');
+            if (btn && btn.innerText.includes('View Transcript')) {
+                toggleTranscript(btn);
+            }
+        }
+    }, 500);
+}
+
 // Ensure globally accessible
 window.openLeadModal = openLeadModal;
 window.closeLeadModal = closeLeadModal;
 window.toggleTranscript = toggleTranscript;
+window.jumpToTranscript = jumpToTranscript;
 

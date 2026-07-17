@@ -595,6 +595,9 @@ async function loadCRM() {
         const res = await fetch('/api/calls');
         const data = await res.json();
         
+        // Cache calls globally to avoid string encoding issues in HTML attributes
+        window.allCalls = data;
+        
         const colInterested = document.getElementById('kb-col-interested');
         const colOther = document.getElementById('kb-col-other');
         const colSell = document.getElementById('kb-col-sell');
@@ -614,11 +617,10 @@ async function loadCRM() {
         const createCard = (m) => {
             const dateStr = new Date(m.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
             const title = m.customer_name ? m.customer_name : 'Lead #' + m.id;
-            const dataStr = encodeURIComponent(JSON.stringify(m));
             return `
                 <div class="kanban-card">
                     <div class="kanban-card-header">
-                        <span class="kanban-card-title" style="cursor:pointer; color:var(--primary); text-decoration:underline;" onclick="openLeadModal('${dataStr}')">${title}</span>
+                        <span class="kanban-card-title" style="cursor:pointer; color:var(--primary); text-decoration:underline;" onclick="openLeadModal('${m.call_id}')">${title}</span>
                         <span class="kanban-card-date">${dateStr}</span>
                     </div>
                     <div class="kanban-card-detail"><strong>Call ID:</strong> <span style="font-family: monospace;">${m.call_id ? m.call_id.substring(0, 10) + '...' : '—'}</span></div>
@@ -691,9 +693,12 @@ async function loadTranscripts() {
 }
 
 // ─── Modal Logic ────────────────────────────────────────────────────────────
-function openLeadModal(dataStr) {
+function openLeadModal(callId) {
     try {
-        const m = JSON.parse(decodeURIComponent(dataStr));
+        if (!window.allCalls) return;
+        const m = window.allCalls.find(c => c.call_id === callId);
+        if (!m) return;
+
         const modal = document.getElementById('lead-modal');
         const titleEl = document.getElementById('modal-lead-name');
         const bodyEl = document.getElementById('modal-lead-body');

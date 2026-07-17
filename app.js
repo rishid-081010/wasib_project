@@ -214,11 +214,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function switchTab(tab) {
     const allViews = [
         'property-pitch-view', 'open-house-view', 'calendar-view', 
-        'webhooks-view', 'interested-view', 'selling-view', 'other-props-view', 
+        'webhooks-view', 'unanswered-view', 'interested-view', 'selling-view', 'other-props-view', 
         'callback-view', 'crm-view', 'transcripts-view'
     ];
     const allNavs = [
-        'nav-dashboard', 'nav-calendar', 'nav-webhooks', 'nav-interested',
+        'nav-dashboard', 'nav-calendar', 'nav-webhooks', 'nav-unanswered', 'nav-interested',
         'nav-selling', 'nav-other-props', 'nav-callback', 
         'nav-crm', 'nav-transcripts'
     ];
@@ -253,6 +253,10 @@ function switchTab(tab) {
         document.getElementById('webhooks-view').classList.add('active-view');
         document.getElementById('nav-webhooks').classList.add('active');
         loadWebhookLogs();
+    } else if (tab === 'unanswered') {
+        document.getElementById('unanswered-view').classList.add('active-view');
+        document.getElementById('nav-unanswered').classList.add('active');
+        loadUnansweredLeads();
     } else if (tab === 'interested') {
         document.getElementById('interested-view').classList.add('active-view');
         document.getElementById('nav-interested').classList.add('active');
@@ -459,6 +463,30 @@ async function loadWebhookLogs() {
 }
 
 // ─── Fetch Functions for New Tabs ─────────────────────────────────────────────
+async function loadUnansweredLeads() {
+    try {
+        const res = await fetch('/api/unanswered');
+        const data = await res.json();
+        document.getElementById('unanswered-total').innerText = data.length;
+        const tbody = document.getElementById('unanswered-table-body');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:2rem;">No unanswered leads yet.</td></tr>';
+            return;
+        }
+        data.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${m.date || '—'}</td>
+                <td style="font-family: monospace; font-size: 0.8rem;">${m.call_id ? m.call_id.substring(0, 16) + '...' : '—'}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Error loading unanswered leads:', err);
+    }
+}
+
 async function loadInterestedLeads() {
     try {
         const res = await fetch('/api/interested');
@@ -571,11 +599,11 @@ async function loadCRM() {
         const colOther = document.getElementById('kb-col-other');
         const colSell = document.getElementById('kb-col-sell');
         const colCallback = document.getElementById('kb-col-callback');
-        const colNoAnswer = document.getElementById('kb-col-noanswer');
+        const colUnanswered = document.getElementById('kb-col-unanswered');
 
         // Clear columns
-        [colInterested, colOther, colSell, colCallback, colNoAnswer].forEach(col => col.innerHTML = '');
-        let counts = { interested: 0, other: 0, sell: 0, callback: 0, noanswer: 0 };
+        [colInterested, colOther, colSell, colCallback, colUnanswered].forEach(col => col.innerHTML = '');
+        let counts = { interested: 0, other: 0, sell: 0, callback: 0, unanswered: 0 };
 
         if (data.length === 0) {
             colInterested.innerHTML = '<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1rem;">No leads yet.</div>';
@@ -603,9 +631,9 @@ async function loadCRM() {
 
         // Categorize cards (newest first)
         data.reverse().forEach(m => {
-            if (m.answered === 'no') {
-                colNoAnswer.innerHTML += createCard(m);
-                counts.noanswer++;
+            if (m.answered === 'no' && m.callback_requested !== 'yes') {
+                colUnanswered.innerHTML += createCard(m);
+                counts.unanswered++;
             } else if (m.main_property === 'yes') {
                 colInterested.innerHTML += createCard(m);
                 counts.interested++;
@@ -627,7 +655,7 @@ async function loadCRM() {
         document.getElementById('kb-count-other').innerText = counts.other;
         document.getElementById('kb-count-sell').innerText = counts.sell;
         document.getElementById('kb-count-callback').innerText = counts.callback;
-        document.getElementById('kb-count-noanswer').innerText = counts.noanswer;
+        document.getElementById('kb-count-unanswered').innerText = counts.unanswered;
 
     } catch (e) { console.error('Error loadCRM:', e); }
 }

@@ -64,7 +64,7 @@ function handleRetellWebhook(req, res) {
     const args = body.args || {};
     const callId = body.call_id || `call_${Date.now()}`;
 
-    if (functionName === 'not_answered') {
+    if (functionName === 'unanswered') {
         const callRecord = {
             id: store.calls.length + 1,
             call_id: callId,
@@ -74,7 +74,7 @@ function handleRetellWebhook(req, res) {
         };
         store.calls.unshift(callRecord);
         saveData(store);
-        return res.status(200).json({ status: 'success', message: 'not_answered tool logged' });
+        return res.status(200).json({ status: 'success', message: 'unanswered tool logged' });
     }
 
     if (functionName === 'callback') {
@@ -269,7 +269,7 @@ app.get('/api/callback', (req, res) => {
     // Retell doesn't have a direct "callback" field in your prompt right now,
     // so we can use answered = no as a placeholder for callbacks.
     const callbacks = store.calls
-        .filter(c => c.answered === 'no')
+        .filter(c => c.answered === 'no' || c.callback_requested === 'yes')
         .map(c => ({
             id: c.id,
             call_id: c.call_id,
@@ -277,6 +277,19 @@ app.get('/api/callback', (req, res) => {
             timestamp: c.timestamp
         }));
     res.json(callbacks);
+});
+
+// ─── API: Unanswered Leads ──────────────────────────────────────────────────
+app.get('/api/unanswered', (req, res) => {
+    const unanswered = store.calls
+        .filter(c => c.answered === 'no' && c.callback_requested !== 'yes')
+        .map(c => ({
+            id: c.id,
+            call_id: c.call_id,
+            date: new Date(c.timestamp).toLocaleDateString('en-GB'),
+            timestamp: c.timestamp
+        }));
+    res.json(unanswered);
 });
 
 // ─── API: Transcripts (placeholder, returns all calls) ──────────────────────

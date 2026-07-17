@@ -27,6 +27,7 @@
                 <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard'); return false;">Dashboard</a>
                 <a href="#" class="nav-item" id="nav-calendar" onclick="switchTab('calendar'); return false;">Calendar</a>
                 <a href="#" class="nav-item" id="nav-webhooks" onclick="switchTab('webhooks'); return false;">Webhooks</a>
+                <a href="#" class="nav-item" id="nav-unanswered" onclick="switchTab('unanswered'); return false;">Unanswered</a>
                 <a href="#" class="nav-item" id="nav-interested" onclick="switchTab('interested'); return false;">Interested</a>
                 <a href="#" class="nav-item" id="nav-selling" onclick="switchTab('selling'); return false;">Looking to Sell</a>
                 <a href="#" class="nav-item" id="nav-other-props" onclick="switchTab('other-props'); return false;">Other Properties</a>
@@ -258,6 +259,23 @@
                 </div>
             </section>
 
+            <!-- ══════════════════ UNANSWERED VIEW ══════════════════ -->
+            <section id="unanswered-view" class="dashboard-view">
+                <div class="section-header-bar"><h2>Unanswered Leads</h2><button class="refresh-btn" onclick="loadUnansweredLeads()">↻ Refresh</button></div>
+                <div class="glass-card kpi-card" style="margin-bottom: 1.5rem; max-width: 250px;">
+                    <span class="kpi-label">Total Unanswered</span>
+                    <span class="kpi-value text-red" id="unanswered-total">0</span>
+                </div>
+                <div class="glass-card table-container">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead><tr><th>Date</th><th>Call ID</th></tr></thead>
+                            <tbody id="unanswered-table-body"><tr><td colspan="2" style="text-align:center;color:var(--text-muted);padding:2rem;">Loading...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- ══════════════════ CRM VIEW ══════════════════ -->
             <section id="crm-view" class="dashboard-view">
                 <div class="section-header-bar"><h2>CRM Kanban Board</h2><button class="refresh-btn" onclick="loadCRM()">↻ Refresh Kanban</button></div>
@@ -298,13 +316,13 @@
                         <div class="kanban-cards-container" id="kb-col-callback"></div>
                     </div>
                     
-                    <!-- Column 5: Didnt answer -->
+                    <!-- Column 5: Unanswered -->
                     <div class="kanban-column">
                         <div class="kanban-header">
-                            <span class="kanban-title text-red" style="cursor: pointer;" onclick="switchTab('callback')" title="Go to Call Back">Didn't Answer</span>
-                            <span class="kanban-count" id="kb-count-noanswer">0</span>
+                            <span class="kanban-title text-red" style="cursor: pointer;" onclick="switchTab('unanswered')" title="Go to Unanswered">Unanswered</span>
+                            <span class="kanban-count" id="kb-count-unanswered">0</span>
                         </div>
-                        <div class="kanban-cards-container" id="kb-col-noanswer"></div>
+                        <div class="kanban-cards-container" id="kb-col-unanswered"></div>
                     </div>
                 </div>
             </section>
